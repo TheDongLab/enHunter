@@ -1,8 +1,7 @@
 version 1.0
 
-#TODO ADD R scripts as input variable paths?
-
-import "step6.wdl" as Step6Task
+# TODO ADD R scripts as input variable paths?
+# TODO remove intermediate eRNA.tmp files? (not sure how)
 
 workflow enHunter {
     input {
@@ -21,12 +20,11 @@ workflow enHunter {
       SAMPLE_GROUP=SAMPLE_GROUP, 
       genome_size=genome_size, 
       toExclude=toExclude, 
-      #TODO make inputBG a conditional variable 
-      init_inputBG=inputBG
+      inputBG=inputBG
     }
 
     call step1 { 
-      input: inputBG=step0.inputBG
+      input: inputBG=inputBG
     }
 
     call step2 { 
@@ -53,10 +51,19 @@ workflow enHunter {
       splicing_site=splicing_site
     }
 
-    call Step6Task.eRNASigNif { 
+    call step6 { 
       input: 
-      eRNA5=step5.eRNA5
+      eRNA5=step5.eRNA5, 
+      list_bw_file=list_bw_file,
+      genome_size=genome_size, 
+      SAMPLE_GROUP=SAMPLE_GROUP, 
+      toExclude=toExclude
+    }
 
+    output { 
+      File bed = step6.bed
+      File loci = step6.loci
+      File meanRPM = step6.meanRPM
     }
 }
 
@@ -67,23 +74,16 @@ task step0 {
     String SAMPLE_GROUP
     Int genome_size
     File toExclude
-    File init_inputBG
+    File inputBG
   }
     
     command { 
-      #TODO merged signal might already be implemented 
-      #also this might run into issues bc you are calling a .sh script 
-      inputBG=$(TNE_caller.combine_bigwig.v2.sh ~{list_bw_file} ~{SAMPLE_GROUP})
-
       bedtools random -seed 3 -g ~{genome_size} -l 1 -n 1000000 | sortBed | intersectBed -a - -b ~{toExclude} -v -sorted | intersectBed -a ~{inputBG} -b - -sorted -u | cut -f4 > transcriptional.noise.rpm.txt
       RScript TNE_caller.fit.Tx.noise.R transcriptional.noise.rpm.txt 
-
       tail -n1 transcriptional.noise.rpm.pvalues.txt
     }
 
     output { 
-      File inputBG="trimmedmean.uniq.normalized.${SAMPLE_GROUP}.bedGraph"
-
       #stdout could contain more than Dsig (check)
       Int Dsig = read_int(stdout())
     }
@@ -167,4 +167,62 @@ task step5 {
   output { 
     File eRNA5 = "eRNA.tmp5"  
   }
+}
+
+# step6: calculate the significance of eRNA
+task step6 {
+    input {
+        File eRNA5
+        File list_bw_file
+        Int genome_size
+        String SAMPLE_GROUP
+        File toExclude
+    }
+
+  command <<<
+        while read sample filename
+    do
+        echo " - sample:" $sample;
+
+        format=${filename##*.} # get extension
+        
+        if [[ $format =~ "bigwig|BIGWIG|bw|BW" ]];
+        then
+        bedtools shuffle -seed 123 -excl ~{toExclude} -noOverlapping -i ~{eRNA5} -g ~{genome_size} | awk -vOFS="\t" '$4=$1"_"$2"_"$3;' | bigWigAverageOverBed $filename stdin stdout | cut -f1,5 > $filename.~{SAMPLE_GROUP}.rdbg &
+        bigWigAverageOverBed $filename ~{eRNA5} stdout | cut -f1,5 | sort -k1,1 -o $filename.~{SAMPLE_GROUP}.eRNA.meanRPM
+        elif [[ $format =~ "bam|BAM|cram|CRAM" ]]; 
+        then
+        bedtools shuffle -seed 123 -excl ~{toExclude} -noOverlapping -i ~{eRNA5} -g ~{genome_size} | awk -vOFS="\t" '$4=$1"_"$2"_"$3;' | bedtools coverage -a stdin -b $filename -d | groupBy -g 4 -c 6 -o mean > $filename.~{SAMPLE_GROUP}.rdbg &
+        bedtools coverage -a ~{eRNA5} -b $filename -d | groupBy -g 4 -c 6 -o mean | sort -k1,1 -o $filename.~{SAMPLE_GROUP}.eRNA.meanRPM
+        fi
+        
+    done < ~{list_bw_file}
+  
+    RScript TNE_caller.consistency.R ~{SAMPLE_GROUP} ~{list_bw_file}
+    # output are eRNA.tmp5.meanRPM.xls, eRNA.tmp5.pvalues.xls, and eRNA.tmp5.pvalues.adjusted.xls
+
+    #3. Select TNE with adjusted p <= 0.05: 
+    # bonferroni for the major groups
+    awk '{OFS="\t"; split($1,a,"_"); if($1~/^chr/) {if($4<=0.05) print a[1],a[2],a[3],$1}}' eRNA.tmp5.pvalues.adjusted.xls | sortBed > eRNA.bonferroni.bed
+    # FDR with method <=0.05
+    awk '{OFS="\t"; split($1,a,"_"); if($1~/^chr/) {if($5<=0.05) print a[1],a[2],a[3],$1}}' eRNA.tmp5.pvalues.adjusted.xls | sortBed > eRNA.fdr.bed
+
+    # =================
+    # use bonferroni for major cell types and FDR for minor cell types.
+    ln -fs eRNA.fdr.bed eRNA.bed
+    # loci.txt required for fasteQTL
+    awk 'BEGIN{OFS="\t"; print "id","chr","s1","s2";}{print $4,$1,$2,$3;}' eRNA.bed > eRNA.loci.txt  
+    # meanRPM (RPM = reads per million)
+    paste eRNA.tmp5.pvalues.adjusted.xls eRNA.tmp5.meanRPM.xls | awk 'NR ==1 || $5<=0.05' | cut -f6- > eRNA.meanRPM.xls
+
+  >>>
+
+  output { 
+    #final outputs: 
+    # eRNA.bed, eRNA.loci.txt, eRNA.meanRPM.xls
+    File bed = "eRNA.bed"
+    File loci = "eRNA.loci.txt"
+    File meanRPM = "eRNA.meanRPM.xls"
+  }
+
 }
