@@ -1,13 +1,16 @@
 version 1.0
 
-# TODO ADD R scripts as input variable paths?
 # TODO remove intermediate eRNA.tmp files? (not sure how) -> combind to one task 
+# https://hub.docker.com/repository/docker/rwang429/enhunter-filter 
 
 workflow enHunter {
     input {
         Int n_CPU
         Float GB_memory
         Int GB_disk
+
+        File R_fit         # TNE_caller.fit.Tx.noise.R
+        File R_consistency # TNE_caller.consistency.R
 
         String SAMPLE_GROUP 
         File inputBG
@@ -23,6 +26,8 @@ workflow enHunter {
         n_CPU = n_CPU,
         GB_memory = GB_memory,
         GB_disk = GB_disk, 
+
+        R_fit = R_fit,
 
         list_bw_file=list_bw_file,
         SAMPLE_GROUP=SAMPLE_GROUP, 
@@ -80,7 +85,9 @@ workflow enHunter {
       input: 
         n_CPU = n_CPU,
         GB_memory = GB_memory,
-        GB_disk = GB_disk, 
+        GB_disk = GB_disk,
+
+        R_consistency = R_consistency, 
 
         eRNA5=step5.eRNA5, 
         list_bw_file=list_bw_file,
@@ -103,6 +110,8 @@ task step0 {
     Float GB_memory
     Int GB_disk
 
+    File R_fit 
+
     File list_bw_file
     String SAMPLE_GROUP
     Int genome_size
@@ -112,7 +121,8 @@ task step0 {
     
     command { 
       bedtools random -seed 3 -g ~{genome_size} -l 1 -n 1000000 | sortBed | intersectBed -a - -b ~{toExclude} -v -sorted | intersectBed -a ~{inputBG} -b - -sorted -u | cut -f4 > transcriptional.noise.rpm.txt
-      RScript TNE_caller.fit.Tx.noise.R transcriptional.noise.rpm.txt 
+      # TNE_caller.fit.Tx.noise.R 
+      RScript ~{R_fit} transcriptional.noise.rpm.txt 
       tail -n1 transcriptional.noise.rpm.pvalues.txt
     }
 
@@ -287,6 +297,8 @@ task step6 {
       Float GB_memory
       Int GB_disk
 
+      File R_consistency
+
       File eRNA5
       File list_bw_file
       Int genome_size
@@ -313,7 +325,7 @@ task step6 {
         
     done < ~{list_bw_file}
   
-    RScript TNE_caller.consistency.R ~{SAMPLE_GROUP} ~{list_bw_file}
+    RScript ~{R_consistency} ~{SAMPLE_GROUP} ~{list_bw_file}
     # output are eRNA.tmp5.meanRPM.xls, eRNA.tmp5.pvalues.xls, and eRNA.tmp5.pvalues.adjusted.xls
 
     #3. Select TNE with adjusted p <= 0.05: 
