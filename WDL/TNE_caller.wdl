@@ -1,10 +1,14 @@
 version 1.0
 
 # TODO ADD R scripts as input variable paths?
-# TODO remove intermediate eRNA.tmp files? (not sure how)
+# TODO remove intermediate eRNA.tmp files? (not sure how) -> combind to one task 
 
 workflow enHunter {
     input {
+        Int n_CPU
+        Float GB_memory
+        Int GB_disk
+
         String SAMPLE_GROUP 
         File inputBG
         Int genome_size 
@@ -16,48 +20,73 @@ workflow enHunter {
 
     call step0 { 
       input: 
-      list_bw_file=list_bw_file,
-      SAMPLE_GROUP=SAMPLE_GROUP, 
-      genome_size=genome_size, 
-      toExclude=toExclude, 
-      inputBG=inputBG
+        n_CPU = n_CPU,
+        GB_memory = GB_memory,
+        GB_disk = GB_disk, 
+
+        list_bw_file=list_bw_file,
+        SAMPLE_GROUP=SAMPLE_GROUP, 
+        genome_size=genome_size, 
+        toExclude=toExclude, 
+        inputBG=inputBG
     }
 
     call step1 { 
-      input: inputBG=inputBG
+      input: 
+        n_CPU = n_CPU,
+        GB_memory = GB_memory,
+        GB_disk = GB_disk, 
+
+        inputBG=inputBG
     }
 
     call step2 { 
       input: 
-      eRNA1=step1.eRNA1,
-      Dsig=step0.Dsig
+        n_CPU = n_CPU,
+        GB_memory = GB_memory,
+        GB_disk = GB_disk, 
+
+        eRNA1=step1.eRNA1,
+        Dsig=step0.Dsig
     }
 
     call step3 { 
       input:
-      eRNA2=step2.eRNA2, 
-      toExclude=toExclude
+        n_CPU = n_CPU,
+        GB_memory = GB_memory,
+        GB_disk = GB_disk, 
+
+        eRNA2=step2.eRNA2, 
+        toExclude=toExclude
     }
 
     call step4 { 
       input: 
-      eRNA3=step3.eRNA3,
-      length_min=length_min
+        n_CPU = n_CPU,
+        GB_memory = GB_memory,
+        GB_disk = GB_disk, 
+
+        eRNA3=step3.eRNA3,
+        length_min=length_min
     }
 
     call step5 { 
       input:
-      eRNA4=step4.eRNA4, 
-      splicing_site=splicing_site
+        eRNA4=step4.eRNA4, 
+        splicing_site=splicing_site
     }
 
     call step6 { 
       input: 
-      eRNA5=step5.eRNA5, 
-      list_bw_file=list_bw_file,
-      genome_size=genome_size, 
-      SAMPLE_GROUP=SAMPLE_GROUP, 
-      toExclude=toExclude
+        n_CPU = n_CPU,
+        GB_memory = GB_memory,
+        GB_disk = GB_disk, 
+
+        eRNA5=step5.eRNA5, 
+        list_bw_file=list_bw_file,
+        genome_size=genome_size, 
+        SAMPLE_GROUP=SAMPLE_GROUP, 
+        toExclude=toExclude
     }
 
     output { 
@@ -70,6 +99,10 @@ workflow enHunter {
 # step0: measure transcriptional noise in background genomic regions
 task step0 {
   input {
+    Int n_CPU
+    Float GB_memory
+    Int GB_disk
+
     File list_bw_file
     String SAMPLE_GROUP
     Int genome_size
@@ -87,11 +120,24 @@ task step0 {
       #stdout could contain more than Dsig (check)
       Int Dsig = read_int(stdout())
     }
+
+    runtime {
+        docker: "rwang429/enhunter-filter:latest"
+        memory: "${GB_memory}GB"
+        disks: "local-disk ${GB_disk} SSD"
+        cpu: "${n_CPU}"
+        preemptible: 1
+        zones: "us-central1-a us-central1-b"
+    }
 }
 
 #step1: any regions with value > baseLevel (i.e. average sequencing depth)
 task step1 {
   input {
+    Int n_CPU
+    Float GB_memory
+    Int GB_disk
+
     File inputBG 
   }
 
@@ -103,11 +149,24 @@ task step1 {
   output {
      File eRNA1 = "eRNA.tmp1"
   }
+
+  runtime {
+    docker: "rwang429/enhunter-filter:latest"
+    memory: "${GB_memory}GB"
+    disks: "local-disk ${GB_disk} SSD"
+    cpu: "${n_CPU}"
+    preemptible: 1
+    zones: "us-central1-a us-central1-b"
+  }
 }
 
 # step2: summit RPM >=Dsig (density with p<0.05)
 task step2 {
   input {
+    Int n_CPU
+    Float GB_memory
+    Int GB_disk
+
     File eRNA1
     Int Dsig 
   }
@@ -119,11 +178,25 @@ task step2 {
   output { 
     File eRNA2 = "eRNA.tmp2"
   }
+
+  runtime {
+    docker: "rwang429/enhunter-filter:latest"
+    memory: "${GB_memory}GB"
+    disks: "local-disk ${GB_disk} SSD"
+    cpu: "${n_CPU}"
+    preemptible: 1
+    zones: "us-central1-a us-central1-b"
+  }
 }
 
 # step3: located in non-generic regions (e.g. 500bp away from any annotated exons)
 task step3 {
   input {
+    Int n_CPU
+    Float GB_memory
+    Int GB_disk
+
+
     File eRNA2
     File toExclude
   }
@@ -135,11 +208,25 @@ task step3 {
   output { 
     File eRNA3 = "eRNA.tmp3" 
   }
+
+  runtime {
+    docker: "rwang429/enhunter-filter:latest"
+    memory: "${GB_memory}GB"
+    disks: "local-disk ${GB_disk} SSD"
+    cpu: "${n_CPU}"
+    preemptible: 1
+    zones: "us-central1-a us-central1-b"
+  }
 }
 
 # step4: length > $length_min
 task step4 {
   input {
+    Int n_CPU
+    Float GB_memory
+    Int GB_disk
+
+
     File eRNA3
     Int length_min
   }
@@ -151,11 +238,25 @@ task step4 {
   output { 
     File eRNA4 = "eRNA.tmp4" 
   }
+
+  runtime {
+    docker: "rwang429/enhunter-filter:latest"
+    memory: "${GB_memory}GB"
+    disks: "local-disk ${GB_disk} SSD"
+    cpu: "${n_CPU}"
+    preemptible: 1
+    zones: "us-central1-a us-central1-b"
+  }
 }
 
 # step5: don't contain any splicing sites (donor or acceptor from trinity/cufflinks de novo assembly)
 task step5 {
   input {
+    Int n_CPU
+    Float GB_memory
+    Int GB_disk
+
+
     File eRNA4
     File splicing_site
   }
@@ -167,16 +268,30 @@ task step5 {
   output { 
     File eRNA5 = "eRNA.tmp5"  
   }
+
+
+  runtime {
+    docker: "rwang429/enhunter-filter:latest"
+    memory: "${GB_memory}GB"
+    disks: "local-disk ${GB_disk} SSD"
+    cpu: "${n_CPU}"
+    preemptible: 1
+    zones: "us-central1-a us-central1-b"
+  }
 }
 
 # step6: calculate the significance of eRNA
 task step6 {
     input {
-        File eRNA5
-        File list_bw_file
-        Int genome_size
-        String SAMPLE_GROUP
-        File toExclude
+      Int n_CPU
+      Float GB_memory
+      Int GB_disk
+
+      File eRNA5
+      File list_bw_file
+      Int genome_size
+      String SAMPLE_GROUP
+      File toExclude
     }
 
   command <<<
@@ -223,6 +338,15 @@ task step6 {
     File bed = "eRNA.bed"
     File loci = "eRNA.loci.txt"
     File meanRPM = "eRNA.meanRPM.xls"
+  }
+
+  runtime {
+    docker: "rwang429/enhunter-filter:latest"
+    memory: "${GB_memory}GB"
+    disks: "local-disk ${GB_disk} SSD"
+    cpu: "${n_CPU}"
+    preemptible: 1
+    zones: "us-central1-a us-central1-b"
   }
 
 }
