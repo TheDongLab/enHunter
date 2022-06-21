@@ -12,7 +12,7 @@ workflow Scatter {
     Array[File] inputFiles = read_lines(bigwig_files_list)
 
     scatter(oneFile in inputFiles) {
-        call md5 { 
+        call generateJunctions { 
             input: 
             inputFile=oneFile, 
             n_CPU = n_CPU,
@@ -21,9 +21,9 @@ workflow Scatter {
         }
     }
 
-    call md5ofmd5s { 
+    call combine { 
         input: 
-        inputFiles=md5.value, 
+        inputFiles=generateJunctions.value, 
         n_CPU = n_CPU,
         GB_memory = GB_memory,
         GB_disk = GB_disk 
@@ -31,7 +31,7 @@ workflow Scatter {
 
 }
 
-task md5 {
+task generateJunctions {
     input {
         File inputFile
         Int n_CPU
@@ -62,7 +62,7 @@ task md5 {
     }
 }
 
-task md5ofmd5s {
+task combine {
 
     input {
         Array[File] inputFiles
