@@ -1,0 +1,16 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+*.Rproj
+*.bed
+*.png
+*.xls
+*.txt
+*.counts
+*.counts.v2
+*.csv
+*.pdf
+*.peaks
+*.narrowPeak
