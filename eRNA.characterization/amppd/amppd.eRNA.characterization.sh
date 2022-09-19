@@ -117,9 +117,8 @@ awk '$4=="EP300"' $EXTERNAL_FEATURE/TFBS/count.encRegTfbsClusteredWithCells.hg38
 echo "RUNNING ---- CAGE"
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/permissive_enhancers_hg38_blood_only.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f08.CAGEbloodonlyenhancer.txt
 
-#redo 
-# sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.txt | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/all_tissues/all_enhancer_tissues_hg38_sorted.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f08.CAGEenhtissue.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/all_tissues/all_enhancer_tissues_hg38_v2_sorted.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f08.CAGEenhtissue.txt
+sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.txt | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
 
 # all premissive enhancers -> liftover to hg38 
 # curl -s https://fantom.gsc.riken.jp/5/datafiles/latest/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz | gzip -d | liftOver stdin hg19ToHg38.over.chain.gz human_permissive_enhancers_phase_1_and_2_hg38.bed unMappedHumanPermissiveEnh # N=65386
@@ -265,7 +264,7 @@ grep -vw NA $TMPFILE | cut -f5 | sort | uniq -c | join -1 5 -2 2 -a 1 -e '0' -o 
 
 cut -f4,7 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f20.nHostgene.txt
 
-# ===================================k=
+# ====================================
 # length of host genes
 # ====================================
 cut -f4,6 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f21.lenHostgene.txt
@@ -279,6 +278,22 @@ Rscript $pipeline_path/src/eRNA.characterize.merge.R `ls $pipeline_path/output/$
 
 exit;
 
+# ============================
+# merging data files for both strands 
+# ============================
+
+########## GWAS
+cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f16.GWASDisease.txt $pipeline_path/output/plus/eRNA.enrichment/eRNA.plus.f16.GWASDisease.txt | sort -k 9 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f16.GWASDisease.counts
+# just for testing 
+#cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f16.GWASDisease.txt $pipeline_path/output/plus/eRNA.enrichment/eRNA.plus.f16.GWASDisease.txt | sort -k 9 | cut -f 5-9 | bedtools groupby -g 5 -c 4 -o concat |less 
+
+########## eQTL 
+cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f18.eSNP.gtexCaviarDisease.txt $pipeline_path/output/plus/eRNA.enrichment/eRNA.plus.f18.eSNP.gtexCaviarDisease.txt | sort -k 9 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f18.eSNP.gtexCaviarDisease.txt
+cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f18.eSNP.gtexDapgDisease.txt $pipeline_path/output/plus/eRNA.enrichment/eRNA.plus.f18.eSNP.gtexDapgDisease.txt | sort -k 9 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f18.eSNP.gtexDapgDisease.txt
+cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f18.eSNP.pvalDisease.txt $pipeline_path/output/plus/eRNA.enrichment/eRNA.plus.f18.eSNP.pvalDisease.txt | sort -k 9 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f18.eSNP.pvalDisease.txt
+
+########## CAGE
+cat $pipeline_path/output/minus/eRNA.minus.f08.CAGEenhtissue.txt $pipeline_path/output/plus/eRNA.plus.f08.CAGEenhtissue.txt | sort -k 10 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f18.eSNP.gtexCaviarDisease.txt
 
 ### TODO 
 ############################################################################################################################################################

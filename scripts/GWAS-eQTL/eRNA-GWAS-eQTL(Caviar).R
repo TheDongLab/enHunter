@@ -1,34 +1,25 @@
-# =============================
-## find the corresponding eQTL snp/gene (if any) for GWAS snps 
-## usage: Rscript eRNA_GWAS_eQTL.R gwas_txt eqtl_txt eqtl_db eRNA_char filename
-## this only works for Dapg and Caviar eQTL tables 
-## gwas_txt, eqtl_txt, and eRNA_char are outputs of the eRNA.characterization.sh 
-# =============================
-
 library(data.table)
 library(dplyr)
 
-args<-commandArgs(trailingOnly=TRUE)
-
-gwas <- fread(args[1])
+gwas <- fread("./input_files/characterization/feature.enrichment/eRNA.minus.f16.GWASDisease.txt")
 gwas <- gwas[,4:9]
 colnames(gwas) <- c("TNE", "chr", "start", "end", "rsid", "disease")
 
-eqtl <- fread(args[2])
+eqtl <- fread("./input_files/characterization/feature.enrichment/eRNA.minus.f18.eSNP.gtexCaviarDisease.txt")
 eqtl <- eqtl[,4:9]
 colnames(eqtl) <- c("TNE", "chr", "start", "end", "rsid", "tissue")
 
 all_merged_snps <- merge(gwas, eqtl, by=c("chr", "start", "end", "rsid", "TNE"))
 blood_snps <- all_merged_snps[tissue == "Whole_Blood"]
 
-# read in the Caviar and Dapg table 
+# read in the Caviar table 
 # V19: tissue 
 # V1: chromosome 
 # V7: eQTL start 
 # V8: eQTL end 
 # V14: rsid 
 # V16: gene name 
-caviar <- fread(args[3])
+caviar <- fread("./input_files/characterization/externalData/gtexCaviar.bed")
 caviar <- caviar[, c(1,7,8,14,16,19)]
 colnames(caviar) <- c("chr", "start", "end", "rsid", "gene", "tissue")
 
@@ -39,8 +30,8 @@ dups <- duplicated(blood_snps_genes[,1:7])
 multi_genes <- blood_snps_genes[dups]
 
 # add class information of the TNE 
-eRNA_class <- fread(args[4])  %>% select(V1, class)
+eRNA_class <- fread("./input_files/characterization/eRNA.minus.characterize.xls")  %>% select(V1, class)
 blood_snps_genes <- merge(blood_snps_genes, eRNA_class, by.x="TNE", by.y ="V1")
 
-write.csv(blood_snps_genes %>% select(rsid, TNE, disease, gene, class), 
-          file=args[5], row.names=FALSE)
+write.csv(blood_snps_genes %>% select(rsid, TNE, disease, gene), 
+            file="blood_gene_snps.csv", row.names=FALSE)

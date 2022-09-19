@@ -1,10 +1,21 @@
+# =============================
+## calculate the p-value using a fishers exact test (one tailed)
+## to determine if a tissue/trait is significantly enriched in TNEs 
+## for ALL data (not GWAS) 
+## usage: Rscript fisher_test.R sample control graphName
+# =============================
+
 library(data.table)
 library(dplyr)
 library(ggplot2)
-setwd("~/Documents/college/dong_lab/code/playground/enrichment_analysis")
 
-sample <- fread("./data/minus/eRNA.minus.f08.CAGEenhtissue.counts")
-control <- fread("./data/all_enhancer_tissues_hg38.counts")
+args<-commandArgs(trailingOnly=TRUE)
+
+sample <- fread(args[1])
+control <- fread(args[2])
+
+#sample <- fread("./data/minus/eRNA.minus.f08.CAGEenhtissue.counts")
+#control <- fread("./data/all_enhancer_tissues_hg38.counts")
 
 total <- merge(sample, control, by="V1", all.x = TRUE, all.y = FALSE)
 
@@ -56,6 +67,8 @@ signif <- subset(total, pval < N & TNE > 3)
 total <- total[, pval := as.numeric(pval)]
 p <- ggplot(total, aes(x=reorder(Trait, -pval), y=-log10(pval))) + 
   geom_bar(stat="identity") + 
-  coord_flip() + geom_hline(yintercept=-log10(N), size=.5,linetype = 2)
+  coord_flip() + 
+  geom_hline(yintercept=-log10(N), size=.5,linetype = 2) + xlab("Trait")
 p
 
+ggsave(args[3], p)
