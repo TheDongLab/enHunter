@@ -141,43 +141,65 @@ ggsave("./scripts/annotations/dis2TSS_plus.png", dis2TSS_plus)
 
 ## feature 2: RPKM 
 
-minus.RPM.med <- median(eRNA_minus[, f02.RPKM], na.rm = TRUE)
+minus.RPKM.med <- median(eRNA_minus[, f02.RPKM], na.rm = TRUE)
 
 RPKM_minus <- ggplot(eRNA_minus, aes(x=f02.RPKM)) + 
   geom_histogram(fill="gray", binwidth=0.01) +  
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
         panel.border = element_blank(), text = element_text(size = 20)) + 
-  geom_vline(xintercept=minus.RPM.med, color="red", linetype="dashed") +
+  geom_vline(xintercept=minus.RPKM.med, color="red", linetype="dashed") +
   scale_x_continuous(trans="log10") + xlab("RPKM") + ylab("Count of TNEs") + 
-  annotate("text", x = minus.RPM.med+240, y=8000, size = 6,
-           label=paste0("median: ", round(minus.RPM.med, digits = 2)), color="red")
+  annotate("text", x = minus.RPKM.med+240, y=8000, size = 6,
+           label=paste0("median: ", round(minus.RPKM.med, digits = 2)), color="red")
 RPKM_minus
 ggsave("./scripts/annotations/RPKM_minus.png", RPKM_minus)
 
-plus.RPM.med <- median(eRNA_plus[, f02.RPKM], na.rm = TRUE)
+plus.RPKM.med <- median(eRNA_plus[, f02.RPKM], na.rm = TRUE)
 
 RPKM_plus <- ggplot(eRNA_plus, aes(x=f02.RPKM)) + 
   geom_histogram(fill="gray", binwidth=0.01) +  
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
         panel.border = element_blank(), text = element_text(size = 20)) + 
-  geom_vline(xintercept=plus.RPM.med, color="red", linetype="dashed") +
+  geom_vline(xintercept=plus.RPKM.med, color="red", linetype="dashed") +
   scale_x_continuous(trans="log10") + xlab("RPKM") + ylab("Count of TNEs") + 
-  annotate("text", x = plus.RPM.med+240, y=8000, size = 6,
-           label=paste0("median: ", round(plus.RPM.med, digits = 2)), color="red")
+  annotate("text", x = plus.RPKM.med+240, y=8000, size = 6,
+           label=paste0("median: ", round(plus.RPKM.med, digits = 2)), color="red")
 RPKM_plus
 ggsave("./scripts/annotations/RPKM_plus.png", RPKM_plus)
 
 
-## feature 3: RPM 
-RPM <- ggplot(eRNA, aes(x=f03.RPM)) + 
+## feature 3: RPM
+
+minus.RPM.med <- median(eRNA_minus[, f03.RPM], na.rm = T)
+
+RPM_minus <- ggplot(eRNA_minus, aes(x=f03.RPM)) + 
   geom_histogram(fill="gray", binwidth=0.02) +  
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        panel.border = element_blank()) + scale_x_log10()
-RPM
-ggsave("./scripts/annotations/RPM.png", RPM)
+        panel.border = element_blank(), text = element_text(size = 20)) + 
+  scale_x_log10() + geom_vline(xintercept=minus.RPM.med, color="red", linetype="dashed") +
+  xlab("RPM") + ylab("Count of TNEs") + 
+  annotate("text", x = minus.RPM.med+1, y=8000, size = 6,
+           label=paste0("median: ", round(minus.RPM.med, digits = 2)), color="red")
+RPM_minus
+ggsave("./scripts/annotations/RPM_minus.png", RPM_minus)
+
+plus.RPM.med <- median(eRNA_plus[, f03.RPM], na.rm = T)
+
+RPM_plus <- ggplot(eRNA_plus, aes(x=f03.RPM)) + 
+  geom_histogram(fill="gray", binwidth=0.02) +  
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        panel.border = element_blank(), text = element_text(size = 20)) + 
+  scale_x_log10() + geom_vline(xintercept=plus.RPM.med, color="red", linetype="dashed") +
+  xlab("RPM") + ylab("Count of TNEs") + 
+  annotate("text", x = plus.RPM.med+1, y=8000, size = 6,
+           label=paste0("median: ", round(plus.RPM.med, digits = 2)), color="red")
+RPM_plus
+ggsave("./scripts/annotations/RPM_plus.png", RPM_plus)
+
 
 ## feature 13: phyloP
 phyloP <- ggplot(eRNA, aes(x=f13.phyloP)) + 
