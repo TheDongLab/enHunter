@@ -7,14 +7,17 @@ library(tidyr)
 # one feature, two feature, ...
 # TNE supported by x number features 
 # what are the features that support TNE presence?
-setwd("~/Documents/college/dong_lab/code/playground/annotations")
 
 # class 1 : DHS site and at least one of five additional external features 
 # class 2 : external features but not DHS evidence 
 # class 3 : no supporting external features 
 
+wd <- "./input_files/characterization/"
+
+outdir <- "./scripts/annotations/"
+
 ###### MINUS STRAND ######
-eRNA_minus <- fread("eRNA.minus.characterize.xls")
+eRNA_minus <- fread("./input_files/characterization/eRNA.minus.characterize.xls")
 
 #### class 1
 class1_eRNA_minus <- eRNA_minus[class==1]
@@ -31,7 +34,7 @@ print(paste0("Percentage of class 2 eRNAs : ",
              (nrow(class1_eRNA_minus) + nrow(class2_eRNA_minus))/ nrow(eRNA_minus))) #49.8%
 
 ####### PLUS STRAND ######
-eRNA_plus <- fread("eRNA.plus.characterize.xls")
+eRNA_plus <- fread("./input_files/characterization/eRNA.plus.characterize.xls")
 
 #### class 1
 class1_eRNA_plus <- eRNA_plus[class==1]
@@ -67,7 +70,28 @@ class_graph <- ggplot(class_df, aes(x=classes, y=num_TNE, label=percentage)) +
 
 class_graph
 
-ggsave("class_graph.png", class_graph)
+ggsave("./scripts/annotations/class_graph.png", class_graph)
+
+## class annotations split by strand 
+class_df_split <- data.frame(class = c("class1", "class2", "class3", "class1", "class2", "class3"), 
+                             num_TNE = c(nrow(class1_eRNA_minus), nrow(class2_eRNA_minus), nrow(eRNA_minus[class==3]), 
+                                         nrow(class1_eRNA_plus), nrow(class2_eRNA_plus), nrow(eRNA_plus[class==3])), 
+                             total_TNE = c(nrow(eRNA_minus), nrow(eRNA_minus), nrow(eRNA_minus), nrow(eRNA_plus), nrow(eRNA_plus), nrow(eRNA_plus)),
+                             strand = c("-", "-", "-", "+", "+", "+"))
+
+class_df_split <- class_df_split %>% mutate(percentage = paste0(round((num_TNE / total_TNE) * 100, digits=2), "%"))
+
+class_graph_split <- ggplot(class_df_split, aes(x=strand, y=num_TNE, label=percentage, fill=strand, alpha=class)) + 
+  geom_bar(stat="identity", position = position_dodge()) + 
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        panel.border = element_blank(), text = element_text(size = 20)) + ylab("TNE Count") + 
+  geom_text(position = position_dodge(width = 0.9), vjust = 0) + 
+  xlab("") + scale_y_continuous(breaks = seq(0, 70000, by= 5000)) + scale_alpha_manual(values = c(.25, .5, .75, 1)) + 
+  scale_fill_manual(values = c("blue", "red"))
+
+class_graph_split
+
 
 # combining plus and minus data frames together 
 eRNA_plus <- eRNA_plus[, strand:="+"]
@@ -81,24 +105,70 @@ nrow(eRNA) # 221967
 # no rows are lost by merging 
 
 ## feature 1: distance to TSS 
-#TODO this graph doesn't represent the data very well 
-# NOTE: this can not be log transformed because the negative values will be lost 
-dis2TSS <- ggplot(eRNA, aes(x=f01.dis2TSS)) + 
-  geom_histogram(fill="gray", binwidth=900) +  
+# NO TNEs have a distance of 0 to TSS
+
+intergenic_minus <- round((nrow(eRNA_minus[f01.dis2TSS < 0]) / nrow(eRNA_minus) ) * 100, digits = 2)
+intergenic_txt_minus <- paste0("intergenic (N=", nrow(eRNA_minus[f01.dis2TSS < 0]), "; ", intergenic_minus, "%)")
+
+intronic_minus <- round((nrow(eRNA_minus[f01.dis2TSS > 0]) / nrow(eRNA_minus) ) * 100, digits = 2)
+intronic_txt_minus <- paste0("intronic (N=", nrow(eRNA_minus[f01.dis2TSS > 0]), "; ", intronic_minus, "%)")
+
+dis2TSS_minus <- ggplot(eRNA_minus, aes(x=f01.dis2TSS/1000, fill=f01.dis2TSS < 0)) + 
+  geom_histogram( binwidth=20) +  
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        panel.border = element_blank())
-dis2TSS
-ggsave("dis2TSS.png", dis2TSS)
+        panel.border = element_blank(), legend.title=element_blank(), legend.position=c(0.2, 0.7), text = element_text(size = 20)) +
+  xlab("Distance to the TSS (x 1000 bp)") + 
+  scale_x_continuous(n.breaks = 6) + scale_fill_manual(values = c("purple", "green"), labels = c(intronic_txt_minus, intergenic_txt_minus))
+dis2TSS_minus
+ggsave("./scripts/annotations/dis2TSS_minus.png", dis2TSS_minus)
+
+
+intergenic_plus <- round((nrow(eRNA_plus[f01.dis2TSS < 0]) / nrow(eRNA_plus) ) * 100, digits = 2)
+intergenic_txt_plus <- paste0("intergenic (N=", nrow(eRNA_plus[f01.dis2TSS < 0]), "; ", intergenic_plus, "%)")
+
+intronic_plus <- round((nrow(eRNA_plus[f01.dis2TSS > 0]) / nrow(eRNA_plus) ) * 100, digits = 2)
+intronic_txt_plus <- paste0("intronic (N=", nrow(eRNA_plus[f01.dis2TSS > 0]), "; ", intronic_plus, "%)")
+
+dis2TSS_plus <- ggplot(eRNA_plus, aes(x=f01.dis2TSS/1000, fill=f01.dis2TSS < 0)) + 
+  geom_histogram( binwidth=20) +  
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        panel.border = element_blank(), legend.title=element_blank(), legend.position=c(0.2, 0.7), text = element_text(size = 20)) + xlab("Distance to the TSS (x 1000 bp)") + 
+  scale_x_continuous(n.breaks = 6) + scale_fill_manual(values = c("purple", "green"), labels = c(intronic_txt_plus, intergenic_txt_plus))
+dis2TSS_plus
+ggsave("./scripts/annotations/dis2TSS_plus.png", dis2TSS_plus)
 
 ## feature 2: RPKM 
-RPKM <- ggplot(eRNA, aes(x=f02.RPKM)) + 
+
+minus.RPM.med <- median(eRNA_minus[, f02.RPKM], na.rm = TRUE)
+
+RPKM_minus <- ggplot(eRNA_minus, aes(x=f02.RPKM)) + 
   geom_histogram(fill="gray", binwidth=0.01) +  
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        panel.border = element_blank()) + scale_x_continuous(trans="log10")
-RPKM
-ggsave("RPKM.png", RPKM)
+        panel.border = element_blank(), text = element_text(size = 20)) + 
+  geom_vline(xintercept=minus.RPM.med, color="red", linetype="dashed") +
+  scale_x_continuous(trans="log10") + xlab("RPKM") + ylab("Count of TNEs") + 
+  annotate("text", x = minus.RPM.med+240, y=8000, size = 6,
+           label=paste0("median: ", round(minus.RPM.med, digits = 2)), color="red")
+RPKM_minus
+ggsave("./scripts/annotations/RPKM_minus.png", RPKM_minus)
+
+plus.RPM.med <- median(eRNA_plus[, f02.RPKM], na.rm = TRUE)
+
+RPKM_plus <- ggplot(eRNA_plus, aes(x=f02.RPKM)) + 
+  geom_histogram(fill="gray", binwidth=0.01) +  
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        panel.border = element_blank(), text = element_text(size = 20)) + 
+  geom_vline(xintercept=plus.RPM.med, color="red", linetype="dashed") +
+  scale_x_continuous(trans="log10") + xlab("RPKM") + ylab("Count of TNEs") + 
+  annotate("text", x = plus.RPM.med+240, y=8000, size = 6,
+           label=paste0("median: ", round(plus.RPM.med, digits = 2)), color="red")
+RPKM_plus
+ggsave("./scripts/annotations/RPKM_plus.png", RPKM_plus)
+
 
 ## feature 3: RPM 
 RPM <- ggplot(eRNA, aes(x=f03.RPM)) + 
@@ -107,7 +177,7 @@ RPM <- ggplot(eRNA, aes(x=f03.RPM)) +
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
         panel.border = element_blank()) + scale_x_log10()
 RPM
-ggsave("RPM.png", RPM)
+ggsave("./scripts/annotations/RPM.png", RPM)
 
 ## feature 13: phyloP
 phyloP <- ggplot(eRNA, aes(x=f13.phyloP)) + 
@@ -116,39 +186,39 @@ phyloP <- ggplot(eRNA, aes(x=f13.phyloP)) +
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
         panel.border = element_blank()) 
 phyloP
-ggsave("phyloP.png", phyloP)
+ggsave("./scripts/annotations/phyloP.png", phyloP)
 
 ## feature 5: CpG score ------ IN PROGRESS -----------------
 
 #NOTE idk the merge function in eRNA.merge didn't work 
 #all(is.na(eRNA[["f05.CpG"]])) # every CpG value is NA... 
 
-all_cpgs <- list()
-for (i in list("eRNA", "promoters", "random") ) {
-  minus <- paste0(i, ".minus.f05.CpG.txt")
-  plus <- paste0(i, ".plus.f05.CpG.txt")
-  
-  cpg_minus <- fread(minus) 
-  cpg_minus <- cpg_minus[, strand:="-"]
-  
-  cpg_plus <- fread(plus)
-  cpg_plus <- cpg_plus[, strand:="+"]
-  
-  df <- rbind(cpg_minus, cpg_plus)
-  
-  all_cpgs[[i]] <- df
-}
-
-cpg_erna <- rbind(cpg_erna_minus, cpg_erna_plus)
+# all_cpgs <- list()
+# for (i in list("eRNA", "promoters", "random") ) {
+#   minus <- paste0(i, ".minus.f05.CpG.txt")
+#   plus <- paste0(i, ".plus.f05.CpG.txt")
+#   
+#   cpg_minus <- fread(minus) 
+#   cpg_minus <- cpg_minus[, strand:="-"]
+#   
+#   cpg_plus <- fread(plus)
+#   cpg_plus <- cpg_plus[, strand:="+"]
+#   
+#   df <- rbind(cpg_minus, cpg_plus)
+#   
+#   all_cpgs[[i]] <- df
+# }
+# 
+# cpg_erna <- rbind(cpg_erna_minus, cpg_erna_plus)
 
 ## feature annotations broken down by classes 
-# features = TFBS, P300, CAGEbloodonlyenhancer, CAGEenhancer.1n2, 
+# features = TFBS, P300, CAGEbloodenhancer, CAGEenhancer.1n2, 
 # chromHMM_blood, VISTA, DNaseENCODE, DNaseROADMAP, HCNE
 # NOTE: "f08.CAGEenhancer.1n2", "f10.VISTA", "f12.DNase.ENCODE" weren't used in classification  
 
 # select columns
 features <- c("f06.TFBS", "f07.P300", 
-              "f08.CAGEbloodonlyenhancer", 
+              "f08.CAGEbloodenhancer", 
               "f08.CAGEenhancer.1n2", "f09.chromHMM_blood", "f10.VISTA", "f12.DNaseENCODE", 
               "f12.DNaseROADMAP", "f15.HCNE", "strand")
 
@@ -176,14 +246,15 @@ grouped_long_eRNA$class <- as.factor(grouped_long_eRNA$class)
 # x=strand
 # facet_grid( ~ Feature)
 feature_annot <- ggplot(grouped_long_eRNA, aes(x=strand, y=count, fill=class)) + 
-  geom_bar(stat="identity", position = "stack") + facet_grid( ~ Feature) + theme_bw()
+  geom_bar(stat="identity", position = "stack") + facet_wrap( ~ Feature, scales = "free_y") +
+  theme_bw() + theme( text = element_text(size = 15))
 
 feature_annot
 
-ggsave("feature_annot.png", plot= feature_annot)
+ggsave("./scripts/annotations/feature_annot.png", plot= feature_annot)
 
 ## look at the TNE length distribution of different classes 
-dir <- "~/Documents/college/dong_lab/code/playground"
+dir <- "./input_files/TNE"
 plus.length <- fread(paste0(dir, "/plus.length.bed"))
 minus.length <- fread(paste0(dir, "/minus.length.bed"))
 
@@ -194,14 +265,14 @@ length.df <- rbind( merge(eRNA_plus, plus.length, by="V1"),
 
 class_lengths <- ggplot(length.df, aes(x=V2, fill=class)) + 
   geom_histogram(binwidth=0.05) + facet_grid(~class) + 
-  scale_x_log10() + xlab("TNE Length")
+  scale_x_log10() + xlab("TNE Length") 
 
 class_lengths
-ggsave("class_lengths.png", plot= class_lengths)
+ggsave("./scripts/annotations/class_lengths.png", plot= class_lengths)
 
 ## bidirectional orientation of highly supported TNEs 
-wd <- "~/Documents/college/dong_lab/code/playground/peaks/attempt-3"
-minus.plus <- fread(paste0(wd, "/inputs/minus.plus.bed")) %>% select(V4, V14, V21)
+wd <- "./input_files/closest/"
+minus.plus <- fread(paste0(wd, "minus.plus.bed")) %>% select(V4, V14, V21)
 
 # are there TNEs on the plus strand that have the exact same coordinates as on the minus strand? 
 test <- merge( eRNA, minus.plus, by.x="V1", by.y="V4") %>% mutate(class=as.factor(class))
@@ -211,8 +282,7 @@ minus_plus_bidir_class <- ggplot(test, aes(x=V21, fill=class)) +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
 
-bidir_class 
-ggsave("minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
+ggsave("./scripts/annotations/minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
 
 ## look at number of features supporting TNE elements
 #f06.TFBS>=5 to be considered one feature 
@@ -220,24 +290,44 @@ ggsave("minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
 # similar to the code for generating the eRNA_features table
 feature_ct <- eRNA_features
 feature_ct$ID <- eRNA$V1
+feature_ct$vals <- apply(feature_ct, 1, function(x){
+  x <- x[c("TFBS", "P300", "CAGEbloodenhancer", 
+             "CAGEenhancer.1n2", "chromHMM_blood", "VISTA", "DNaseENCODE", 
+             "DNaseROADMAP", "HCNE")]
+  paste0(unlist(  unlist(names(x[x==1]))), collapse=" ,")
+
+  })
 
 # data is already complied in eRNA_features table
-feature_ct$num <- rowSums(feature_ct[, c("TFBS", "P300", "CAGEbloodonlyenhancer", 
+feature_ct$num <- rowSums(feature_ct[, c("TFBS", "P300", "CAGEbloodenhancer", 
                                                  "CAGEenhancer.1n2", "chromHMM_blood", "VISTA", "DNaseENCODE", 
                                                  "DNaseROADMAP", "HCNE")])
 
 # select for the TNE ids with the most number of features supporting it 
-max_num_feature_ids <- feature_ct %>% filter(num == max(feature_ct$num) ) %>% select(ID, strand)
+max_num_feature_ids <- feature_ct %>% filter(num == max(feature_ct$num) ) %>% 
+  select(ID, strand, class, vals) %>% mutate(num_features= max(feature_ct$num))
 # maximum number of features is 8
+
+testing <- feature_ct %>% filter(VISTA == 1 & num == max(feature_ct$num) - 1) %>% 
+  select(ID, strand, class, vals) %>% mutate(num_features= max(feature_ct$num) - 1)
+
+max_num_feature_ids <- rbind(max_num_feature_ids, testing)
+
+# add RPM and RPKM info 
+max_num_feature_ids <- merge(max_num_feature_ids, eRNA[, c("V1", "strand", "f03.RPM", "f02.RPKM")], 
+                             by.x = c("ID", "strand"), by.y = c("V1", "strand")) 
+
+write.table(max_num_feature_ids , file = "top_TNEs.tsv", row.names = FALSE, sep = "\t")
 
 # continuing data cleaning ... 
 feature_ct$num <- as.factor(feature_ct$num)
 #feature_ct <- feature_ct %>% group_by(num) %>% summarise(count=n()) %>% mutate(per = count/sum(count))
 
+# TODO this would be more clear as a table 
 TNE_feature_count <- ggplot(feature_ct, aes(x=num)) + geom_bar() + xlab("Number of Features")
 TNE_feature_count
 
-ggsave("TNE_feature_count.png", TNE_feature_count)
+ggsave("./scripts/annotations/TNE_feature_count.png", TNE_feature_count)
 
 ### number of GWAS SNPS 
 
@@ -245,7 +335,7 @@ eRNA_GWAS <- ggplot(eRNA, aes(x=f16.GWAS)) +
   geom_bar() + facet_grid(~class) + scale_y_continuous(trans="log10") + 
   xlab("Number of GWAS Snps") +   ggtitle("Distribution of GWAS snps localized to TNE") 
 
-ggsave("TNE_GWAS.png", eRNA_GWAS)
+ggsave("./scripts/annotations/TNE_GWAS.png", eRNA_GWAS)
 
 ### number of eQTL SNPs
 
@@ -256,7 +346,7 @@ eRNA_gtexDapg
 
 max(eRNA$f18.eSNP.gtexDapg) # 2248
 
-ggsave("TNE_gtexDapg.png", eRNA_gtexDapg)
+ggsave("./scripts/annotations/TNE_gtexDapg.png", eRNA_gtexDapg)
 
 eRNA_gtexCaviar <- ggplot(eRNA, aes(x=f18.eSNP.gtexCaviar)) + 
   geom_bar() + facet_grid(~class) + scale_y_continuous(trans="log10") + 
@@ -265,7 +355,7 @@ eRNA_gtexCaviar
 
 max(eRNA$f18.eSNP.gtexCaviar) # 107
 
-ggsave("TNE_gtexCaviar.png", eRNA_gtexCaviar)
+ggsave("./scripts/annotations/TNE_gtexCaviar.png", eRNA_gtexCaviar)
 
 eRNA_pval <- ggplot(eRNA, aes(x=f18.eSNP.pval)) + 
   geom_bar() + facet_grid(~class) + scale_y_continuous(trans="log10") + 
@@ -274,5 +364,5 @@ eRNA_pval
 
 max(eRNA$f18.eSNP.pval) # 18384
 
-ggsave("TNE_pval.png", eRNA_pval)
+ggsave("./scripts/annotations/TNE_pval.png", eRNA_pval)
 

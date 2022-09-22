@@ -49,8 +49,10 @@ echo "RUNNING ---- dis2TSS"
 # have to deal with intronic and intergenic separately
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
+# $11 == 0 means TNE is located within a gene -> + value 
 awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
-# intergenic ones
+# intergenic ones 
+# $11 != 0 means TNE is located not within a gene -> code converts to - value 
 awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed | sortBed) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
 
 sort -k1,1 $TMPFILE > eRNA.$STRAND.f01.dis2TSS.txt
@@ -111,11 +113,8 @@ awk '$4=="EP300"' $EXTERNAL_FEATURE/TFBS/count.encRegTfbsClusteredWithCells.hg38
 # ====================================
 # CAGE-defined enhancers
 # ====================================
-# TODO this is wrong !!!!! 
-## download from FANTOM5 premissive enhancers:
-# permissive_enhancers_hg38_blood_only.bed #N=42986
 echo "RUNNING ---- CAGE"
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/permissive_enhancers_hg38_blood_only.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f08.CAGEbloodonlyenhancer.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/blood_only_enh_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f08.CAGEbloodenhancer.txt
 
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/all_tissues/all_enhancer_tissues_hg38_v2_sorted.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f08.CAGEenhtissue.txt
 sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.txt | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
