@@ -28,8 +28,9 @@ class_plus.minus <- merge(plus.minus, eRNA_plus, by.x = "plus", by.y = "V1") %>%
 ##### making the bi directional pairing distance graphs 
 
 minus_plus_bidir_class <- ggplot(class_minus.plus , aes(x=distance, fill=class_pairing)) + 
-  geom_histogram(bins = 200) + facet_grid(~class_pairing) +
+  geom_histogram(bins = 200) + facet_wrap(~class_pairing, scales = "free_y") +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
+  theme(text = element_text(size = 20)) + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
 
 minus_plus_bidir_class
@@ -37,8 +38,9 @@ minus_plus_bidir_class
 ggsave("minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
 
 plus_minus_bidir_class <- ggplot(class_plus.minus , aes(x=distance, fill=class_pairing)) + 
-  geom_histogram(bins = 200) + facet_grid(~class_pairing) +
+  geom_histogram(bins = 200) + facet_wrap(~class_pairing, scales = "free_y") +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
+  theme(text = element_text(size = 20)) + 
   ggtitle("Plus-Minus Orientation Peak Distance") 
 
 plus_minus_bidir_class

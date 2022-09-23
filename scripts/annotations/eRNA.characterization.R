@@ -343,10 +343,18 @@ write.table(max_num_feature_ids , file = "top_TNEs.tsv", row.names = FALSE, sep 
 
 # continuing data cleaning ... 
 feature_ct$num <- as.factor(feature_ct$num)
+counts <- feature_ct %>% group_by(num) %>% summarise(count = n())
+
+feature_ct <- merge(feature_ct, counts)
+
 #feature_ct <- feature_ct %>% group_by(num) %>% summarise(count=n()) %>% mutate(per = count/sum(count))
 
 # TODO this would be more clear as a table 
-TNE_feature_count <- ggplot(feature_ct, aes(x=num)) + geom_bar() + xlab("Number of Features")
+
+# TODO AYIAAAA 
+TNE_feature_count <- ggplot(feature_ct, aes(x=num, label=count, y=count)) + 
+  geom_bar(stat="identity") + 
+  xlab("Number of Features") 
 TNE_feature_count
 
 ggsave("./scripts/annotations/TNE_feature_count.png", TNE_feature_count)
