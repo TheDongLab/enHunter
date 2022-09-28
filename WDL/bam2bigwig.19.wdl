@@ -20,7 +20,7 @@ workflow bam2bigwig_workflow {
     String sample_name
     File bam_file
     Int total_mapped_reads
-    File chr_sizes
+    Int bin_size
     Int n_CPU
     Float GB_memory
     Int GB_disk
@@ -31,7 +31,7 @@ workflow bam2bigwig_workflow {
             bam_file = bam_file,
             sample_name = sample_name,
             total_mapped_reads = total_mapped_reads,
-            chr_sizes = chr_sizes,
+            bin_size = bin_size,
             n_CPU = n_CPU,
             GB_memory = GB_memory,
             GB_disk = GB_disk
@@ -47,7 +47,7 @@ task bam2bigwig {
     String sample_name
     File bam_file
     Int total_mapped_reads
-    File chr_sizes
+    Int bin_size
     Int n_CPU
     Float GB_memory
     Int GB_disk
@@ -61,14 +61,9 @@ task bam2bigwig {
         RPMscale=$(bc <<< "scale=6;1000000/${total_mapped_reads}") 
 
         echo "bam-->bw, by strand..."
-        bedtools genomecov -ibam ${bam_file} -bg -scale $RPMscale -split -strand + | LC_COLLATE=C sort -k1,1 -k2,2n > ${sample_name}.plus.normalized.bedGraph && \
-        bedGraphToBigWig ${sample_name}.plus.normalized.bedGraph ${chr_sizes} ${sample_name}.plus.normalized.bw && \
-        rm ${sample_name}.plus.normalized.bedGraph
-
-        bedtools genomecov -ibam ${bam_file} -bg -scale $RPMscale -split -strand - | LC_COLLATE=C sort -k1,1 -k2,2n > ${sample_name}.minus.normalized.bedGraph && \
-        bedGraphToBigWig ${sample_name}.minus.normalized.bedGraph ${chr_sizes} ${sample_name}.minus.normalized.bw && \
-        rm ${sample_name}.minus.normalized.bedGraph
-
+        
+        bamCoverage -b ${bam_file} --scaleFactor $RPMscale --filterRNAstrand forward --outFileFormat bigwig -bs ${bin_size} -o ${sample_name}.plus.normalized.bw
+        bamCoverage -b ${bam_file} --scaleFactor $RPMscale --filterRNAstrand reverse --outFileFormat bigwig -bs ${bin_size} -o ${sample_name}.minus.normalized.bw
     }
 
     output {
