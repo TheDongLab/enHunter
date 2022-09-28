@@ -1,5 +1,5 @@
 # Set the base image to Ubuntu
-FROM ubuntu:20.04
+FROM ubuntu:latest
 
 # Setup packages
 USER root
@@ -22,8 +22,10 @@ RUN apt-get clean all && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+RUN rm -f /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python
+
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
-    wget --quiet https://repo.continuum.io/miniconda/Miniconda2-4.0.5-Linux-x86_64.sh -O ~/miniconda.sh && \
+    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
     /bin/bash ~/miniconda.sh -b -p /opt/conda && \
     rm ~/miniconda.sh
 
@@ -49,12 +51,11 @@ ENV HOME=/home/biodocker
 RUN mkdir /home/biodocker/bin
 
 RUN conda config --add channels bioconda
-RUN conda config --add channels conda-forge
 
 RUN conda upgrade conda
 
-RUN conda install -c bioconda deeptools
 RUN conda install -c conda-forge bc
+RUN conda install -c bioconda deeptools=3.5.1
 
 # Overwrite this with 'CMD []' in a dependent Dockerfile
 # CMD specifies what command to run within the container
