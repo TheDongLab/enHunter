@@ -49,10 +49,12 @@ ENV HOME=/home/biodocker
 RUN mkdir /home/biodocker/bin
 
 RUN conda config --add channels bioconda
+RUN conda config --add channels conda-forge
 
 RUN conda upgrade conda
 
 RUN conda install -c bioconda deeptools
+RUN conda install -c conda-forge bc
 
 # Overwrite this with 'CMD []' in a dependent Dockerfile
 # CMD specifies what command to run within the container

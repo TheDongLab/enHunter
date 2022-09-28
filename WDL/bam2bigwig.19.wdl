@@ -72,7 +72,7 @@ task bam2bigwig {
     }
 
     runtime {
-        docker: "bwhbioinformaticshub/bioinformatics-basic:latest"
+        docker: "rwang429/bam2bigwigv2:latest"
         memory: "${GB_memory}GB"
         disks: "local-disk ${GB_disk} SSD"
         cpu: "${n_CPU}"
