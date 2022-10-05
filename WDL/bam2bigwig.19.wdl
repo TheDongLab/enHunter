@@ -19,6 +19,7 @@
 workflow bam2bigwig_workflow {
     String sample_name
     File bam_file
+    File bam_index
     Int total_mapped_reads
     Int bin_size
     Int n_CPU
@@ -28,7 +29,8 @@ workflow bam2bigwig_workflow {
 
     call bam2bigwig {
         input:
-            bam_file = bam_file,
+            bam_file = bam_file, 
+            bam_index = bam_index, 
             sample_name = sample_name,
             total_mapped_reads = total_mapped_reads,
             bin_size = bin_size,
@@ -46,6 +48,7 @@ task bam2bigwig {
 
     String sample_name
     File bam_file
+    File bam_index
     Int total_mapped_reads
     Int bin_size
     Int n_CPU
