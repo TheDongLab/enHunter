@@ -2,32 +2,34 @@
 # usage: $pipeline_path/src/eRNA.characterize.sh minus
 #
 #Features	            Data type	    Description
-#========               =========       ==================================
-#dis2TSS	            integer	        distance between the middle points of HiTNE and the nearest TSS, in bp. If HiTNE is located intronic, it's plus; otherwise it's minus. 
+#========             =========     ==================================
+#dis2TSS	            integer	      distance between the middle points of HiTNE and the nearest TSS, in bp. If HiTNE is located intronic, it's plus; otherwise it's minus. 
 #RPKM	                float	        normalized expression level, calculated in the same way as RPKM.
 #RPM	                float	        reads density at the summit position, normalized to total mapped reads in million. 
-#readsCount	            integer	        raw reads count mapped to the HiTNE
-#normCpG	            float	        normalized CpG score
-
-#nTFBS	                integer	        number of distinct TFs bound to the HiTNE, based on ENCODE ChIPseq cluster (wgEncodeRegTfbsClusteredV3)
-#P300	                boolean	        if the P300 binding site found in the HiTNE
-#enhancer_CAGE	        boolean	        if overlap with any CAGE-defined permissive enhancers
-#enhancer_histone	    boolean	        if overlap with any histone marks-defined enhancers (chromHMM states of E6|E7|E12 from substantial nigro)
-#enhancer_VISTA	        boolean	        if overlap with any tested enhancers (positive enhancers from VISTA enhancer database)
-#bDNase	                boolean	        if overlap with DNase cluster from ENCODE (wgEncodeRegDnaseClustered V2)
-#DNaseROADMAP           boolean         if overlap with DNase narrow peak from Roadmap brain samples 
+#readsCount	          integer	      raw reads count mapped to the HiTNE
+#normCpG	            float	        normalized CpG score 
+#nTFBS	              integer	      number of distinct TFs bound to the HiTNE, based on ENCODE ChIPseq cluster (wgEncodeRegTfbsClusteredV3)
+#P300	                boolean	      if the P300 binding site found in the HiTNE
+#enhancer_CAGE	      boolean	      if overlap with any CAGE-defined permissive enhancers
+#enhancer_histone	    boolean	      if overlap with any histone marks-defined enhancers (chromHMM states of E6|E7|E12 from substantial nigro)
+#enhancer_VISTA	      boolean	      if overlap with any tested enhancers (positive enhancers from VISTA enhancer database)
+#bDNase	              boolean	      if overlap with DNase cluster from ENCODE (wgEncodeRegDnaseClustered V2)
+#DNaseROADMAP         boolean       if overlap with DNase narrow peak from Roadmap brain samples 
 #conservation	        float	        mean phastCons score for the HiTNE region
-#bHCNE	                boolean	        if overlapping with any HCNEs (HCNE_hg38_danRer7_70pc_50col from Ancora)
+#bHCNE	              boolean	      if overlapping with any HCNEs (HCNE_hg38_danRer7_70pc_50col from Ancora)
 
-#bidirectional_trans    str,int,int     closest peak on opposite strand, distance away, and directionality score  
+#bidirectional_trans  str,int,int   closest peak on opposite strand, distance away, and directionality score  
 
-#GWAS	                integer	        number of GWAS SNPs in HiTNE
-#bGWAS	                boolean	        if any GWAS SNPs in HiTNE
-#eSNP	                integer	        number of eQTL SNPs in HiTNE
-#beSNP	                boolean	        if any eQTL SNPs in HiTNE
+#GWAS	                integer	      number of GWAS SNPs in HiTNE
+#bGWAS	              boolean	      if any GWAS SNPs in HiTNE
+#eSNP	                integer	      number of eQTL SNPs in HiTNE
+#beSNP	              boolean	      if any eQTL SNPs in HiTNE
 
-#nHostgene	            integer	        number of HiTNEs in the host gene. 0 for intergenic HiTNE
-#lenHostgene	        integer	        length of host gene. 0 for intergenic HiTNE
+#nHostgene	          integer	      number of HiTNEs in the host gene. 0 for intergenic HiTNE
+#lenHostgene	        integer	      length of host gene. 0 for intergenic HiTNE
+
+#HiC                  integer       number of PIR (promoter interacting regions) in TNE 
+#bHiC                 boolean       if any PIR 
 
 pipeline_path=/data/bioinformatics/projects/donglab/AMPPD_eRNA
 source $pipeline_path/config.txt
@@ -212,7 +214,7 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GWAS_catalog_20220810/GWAS_202208
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GWAS_catalog_20220810/GWAS_20220810.v1.02.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f16.GWASDisease.txt
 
 # ====================================
-# eQTL - overlap with eQTL snps # no strand information -> redo file 
+# eQTL - overlap with eQTL snps 
 # ====================================
 # overlap with eQTL snps 
 # converting the Caviar file 
@@ -274,6 +276,16 @@ mv *.$STRAND.* $pipeline_path/output/$STRAND/
 
 ## merge into a big file: eRNA.characterize.xls
 Rscript $pipeline_path/src/eRNA.characterize.merge.R `ls $pipeline_path/output/$STRAND/eRNA.$STRAND.f*.txt`
+
+# ====================================
+# Hi-C - overlap with PIR 
+# ====================================
+echo "RUNNING ---- Hi-C"
+# TODO test this because it hasn't been run before 
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f22.HiC.txt
+
+#reports the intersected region of A and B with A's name 
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -wb | sort -k4,4 > eRNA.$STRAND.f22.HiCPromoters.txt
 
 exit;
 
