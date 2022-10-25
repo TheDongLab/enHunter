@@ -11,7 +11,6 @@ gsutil -u amp-pd-dawg-analyses ls gs://fc-secure-4300ea7f-8e77-4f20-a20b-3841728
 # creating table of 8356 - 200 
 grep -v -f n200-new-sample-names.tsv new-sample.tsv > n8356-200_new-sample.tsv 
 
-combined.mean.normalized.random.samplesN200.minus.bigwig  combined.mean.normalized.random.samplesN200.plus.bigwig 
 lines=200
 # selecting random n200 samples from CONTROL 
 

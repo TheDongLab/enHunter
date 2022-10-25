@@ -64,3 +64,9 @@ RPMscale=$(bc <<< "scale=6;1000000/$total_mapped_reads")
 bamCoverage -b BF-1001-SVM0_5T1.star.bam --scaleFactor $RPMscale --filterRNAstrand forward --outFileFormat bigwig -bs 20 -o BF-1001-SVM0_5T1.star.bs20.plus.bw
 bamCoverage -b BF-1001-SVM0_5T1.star.bam --scaleFactor $RPMscale --filterRNAstrand reverse --outFileFormat bigwig -bs 20 -o BF-1001-SVM0_5T1.star.bs20.minus.bw
 
+
+###### strand split testing pt 2 (10/24/2022)
+gsutil -u amp-pd-dawg-analyses cp gs://amp-pd-transcriptomics/samples/rnaseq/star/align-reads/BF-1005-SVM0_5T1/BF-1005-SVM0_5T1.star.bam ./
+#gsutil -u amp-pd-dawg-analyses cp gs://amp-pd-transcriptomics/samples/rnaseq/star/align-reads/BF-1005-SVM0_5T1/BF-1005-SVM0_5T1.star.bam.bai ./
+
+samtools view -b -o chr1-BF-1005-SVM0_5T1.star.bam BF-1005-SVM0_5T1.star.bam chr1:25553420-25555318
