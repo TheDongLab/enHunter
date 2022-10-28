@@ -51,9 +51,53 @@ z <- girafe_options(x = z)
 
 print(z)
 
+## with log10(x+1) scale 
+protein_log10 <- ggplot(protein_coding) + geom_point_interactive(aes(x=log10(minus + 1), y=log10(plus + 1), color=strand, tooltip = gene)) + theme_minimal()
+w <- girafe(ggobj = protein_log10)
+w <- girafe_options(x = w)
+print(w)
+
 protein_coding$ratio <- protein_coding$minus/protein_coding$plus
 
 # ratio < 1 AND strand = minus 
 wrong_minus_protein <- protein_coding[protein_coding$ratio < 1 & protein_coding$strand == "-" , ]
 # ratio > 1 AND strand = plus 
 wrong_plus_protein <- protein_coding[protein_coding$ratio > 1 & protein_coding$strand == "+" , ]
+
+
+html_graph <- function(df) {
+  protein_log10 <- ggplot(df) + geom_point_interactive(aes(x=log10(minus + 1), y=log10(plus + 1), color=strand, tooltip = gene)) + theme_minimal()
+  w <- girafe(ggobj = protein_log10)
+  w <- girafe_options(x = w)
+  print(w)
+}
+
+######## reordering data ###########
+library(dplyr)
+# X = minus 
+# Y = plus 
+
+# minus >= plus plot 
+# plot + strand genes first, - genes second 
+# move minus genes to the bottom 
+protein_plus_minus <- protein_coding %>% filter(minus >= plus) %>% arrange(strand)
+tail(protein_plus_minus)
+
+html_graph(protein_plus_minus)
+# X < Y plot 
+# 
+protein_minus_plus <- protein_coding %>% filter(minus < plus) %>% arrange(desc(strand))
+tail(protein_minus_plus)
+html_graph(protein_minus_plus)
+
+final <- ggplot() + geom_point_interactive(protein_minus_plus, mapping = aes(x=log10(minus + 1), y=log10(plus + 1), color=strand, tooltip = gene)) + 
+  geom_point_interactive(protein_plus_minus, mapping = aes(x=log10(minus + 1), y=log10(plus + 1), color=strand, tooltip = gene)) + theme_minimal()
+
+w <- girafe(ggobj = final)
+w <- girafe_options(x = w)
+print(w)
+
+
+
+
+

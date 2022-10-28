@@ -47,15 +47,16 @@ inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
 ## dis2TSS (distance btw middle of HiTNE and the nearest TSS)
 # ====================================
 echo "RUNNING ---- dis2TSS"
-# fgrep -w gene $GENOME/Annotation/Genes/gencode.v37.annotation.gtf | sed 's/[;"]//g'  | awk '{OFS="\t"; print $1, $4-1, $5, $18"___"$10"___"$14, 0, $7}' > $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed
+## NOTE gencode.v37.annotation.genes.bed is the same as gencode.v37.annotation.genes.gtf.bed
+# fgrep -w gene $GENOME/Annotation/Genes/gencode.v37.annotation.gtf | sed 's/[;"]//g'  | awk '{OFS="\t"; print $1, $4-1, $5, $18"___"$10"___"$14, 0, $7}' > $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed
 # have to deal with intronic and intergenic separately
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
 # $11 == 0 means TNE is located within a gene -> + value 
-awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
+awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
 # intergenic ones 
 # $11 != 0 means TNE is located not within a gene -> code converts to - value 
-awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed | sortBed) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
+awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | sortBed) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
 
 sort -k1,1 $TMPFILE > eRNA.$STRAND.f01.dis2TSS.txt
 
@@ -84,11 +85,8 @@ bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -be
 $pipeline_path/bin/getNormalizedCpGscore.awk random.$STRAND.seq.tab | sort -k1,1 > random.$STRAND.f05.Cp.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 random.f05.CpG.tab
 
-# TODO this is not working 
-# promoters.$STRAND.seq.txt is empty  
-# shouldn't this be named gencode.v37.annotation.bed12 instead? -> fix by monday 
-# anyways it seems like it is hg38 though 
-grep protein_coding.protein_coding $GENOME/Annotation/Genes/gencode.v19.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
+# ERROR: promoters.$STRAND.seq.txt is empty  
+grep protein_coding.protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
 
 $pipeline_path/bin/getNormalizedCpGscore.awk promoters.$STRAND.seq.txt | sort -k1,1 > promoters.$STRAND.f05.CpG.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 promoters.f05.CpG.tab
@@ -116,9 +114,11 @@ awk '$4=="EP300"' $EXTERNAL_FEATURE/TFBS/count.encRegTfbsClusteredWithCells.hg38
 # CAGE-defined enhancers
 # ====================================
 echo "RUNNING ---- CAGE"
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/blood_only_enh_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f08.CAGEbloodenhancer.txt
+# annotation with blood expressed enhancers 
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/blood_expressed_enhancers_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f08.CAGEbloodenhancer.txt
 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/all_tissues/all_enhancer_tissues_hg38_v2_sorted.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f08.CAGEenhtissue.txt
+# running Fisher test with differentially expressed enhancer tissue facets 
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/diff_expressed_enh/all_diff_exp_enhancer_tissues_hg38_sorted.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f08.CAGEenhtissue.txt
 sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.txt | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
 
 # all premissive enhancers -> liftover to hg38 
@@ -167,9 +167,8 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Histone/15_coreMarks_hg38lift_seg
 # overlap with VISTA enhancers
 # ====================================
 echo "RUNNING ---- VISTA"
-intersectBed -a $inputbed -b <(cut -f1-4,7 $EXTERNAL_FEATURE/VISTA/hg38.positive_regions.bed) -wao  | sort -k4,4 | awk '{OFS="\t"; print $4, ($6==-1)?"NA":$8"|"$9}' | groupBy -g 1 -c 2 -o concat > eRNA.$STRAND.f10.VISTA.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/VISTA/hg38.pos_regions.2022-10-27.bed -wao  | sort -k4,4 | awk '{OFS="\t"; print $4, ($6==-1)?"NA":$8"|"$9}' | groupBy -g 1 -c 2 -o concat > eRNA.$STRAND.f10.VISTA.txt
 # only group subset which does not have NA 
-#does each TNE only occur once 
 
 # ====================================
 # DNase cluster 
@@ -257,7 +256,7 @@ inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
 
 # if overlap with multiple genes, take the longest one
 #intersectBed -a $inputbed -b $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed -wao | awk '{OFS="\t"; print $0,$7-$6;}' | sort -k4,4 -k12,12nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,8,12 | sed 's/\t\./\tNA/g' > $TMPFILE
-intersectBed -a $inputbedstranded -b $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed -wao -s | awk '{OFS="\t"; print $0,$9-$8;}' | sort -k4,4 -k14,14nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,10,14 | sed 's/\t\./\tNA/g' > $TMPFILE
+intersectBed -a $inputbedstranded -b $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed -wao -s | awk '{OFS="\t"; print $0,$9-$8;}' | sort -k4,4 -k14,14nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,10,14 | sed 's/\t\./\tNA/g' > $TMPFILE
 # host gene (if any); otherwise NA
 cut -f4-5 $TMPFILE > eRNA.$STRAND.f19.Hostgene.txt
 
