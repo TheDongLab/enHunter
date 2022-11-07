@@ -1,19 +1,30 @@
 library(data.table)
 library(ggplot2)
 library(dplyr)
-setwd("~/Documents/college/dong_lab/code/playground/peaks/attempt-3")
+setwd("~/Documents/college/dong_lab/code/enHunter/scripts/peaks/attempt-3")
 
 ### this is different than attempt-2 as it contains the narrowPeak distances of TNEs 
 # with 8000 sample family significance in step 6 
 
+## from an atlas of active enhancers across human cell types and tissues 
+#Enhancer-associated reverse and forward strand transcription initiation events were, on average, separated by 180 bp 
+
 ###### with the minus plus orientation 
-minus.plus <- fread("./inputs/minus.plus.bed", sep = "\t")
+minus.plus <- fread("inputs/minus.plus.bed", sep = "\t")
 
 minus.plus.dist <- ggplot(minus.plus, aes(x=V21)) + 
   geom_histogram(color="black", fill="white") + 
   scale_y_continuous(trans="log2")
 
 minus.plus.dist
+
+dist_minus.plus <- ggplot(minus.plus, aes(x=V21, y=..density..)) + 
+  geom_histogram(color="black", fill="white", binwidth = 30) + 
+  geom_density() + 
+  xlab("Distance to Nearest Peak") + 
+  ggtitle("Minus-Plus Orientation Peak Distance") 
+
+dist_minus.plus
 
 dist_density_minus.plus <- ggplot(minus.plus, aes(x=V21, y=..density..)) + 
   geom_histogram(color="black", fill="white", binwidth = 30) + 
@@ -30,25 +41,26 @@ ggsave("minus.plus.distance.density.plot.png",
        plot=dist_density_minus.plus, device="png")
 
 
-min_dis <- min(minus.plus$V21) # -2453205
-max_dis <- max(minus.plus$V21) # 2230126
+min_dis <- min(minus.plus$V21) # -5511680
+max_dis <- max(minus.plus$V21) # 1764470
 
 # no distances are na 
 any(is.na(minus.plus$V21))
 
-
 # only neg distances
-
 neg.minus.plus <- minus.plus[minus.plus$V21 < 0]
-nrow(neg.minus.plus) # 34464
-length(minus.plus$V21) # 111440
+nrow(neg.minus.plus) # 24078
+length(minus.plus$V21) # 42818
 
 print(paste0("percentage of TNEs where - is before + ", nrow(neg.minus.plus) / length(minus.plus$V21) ))
-# ~ 30%
+# ~ 56%
 
-minus.plus.dist <- ggplot() + geom_histogram(aes(x=neg.minus.plus), color="black", fill="white") + 
-  scale_x_continuous(limits=c(-1000,10)) # limit minimum x value to see distribution of values at higher res
+minus.plus.dist <- ggplot(minus.plus) + geom_histogram(aes(x=V21), color="black", fill="white", binwidth = 10) + 
+  scale_x_continuous(limits=c(-200,200)) # limit minimum x value to see distribution of values at higher res
 
+minus.plus.dist
+
+median(minus.plus)
 ####### with the plus minus orientation 
 
 plus.minus <- fread("./inputs/plus.minus.bed", sep = "\t")
@@ -88,7 +100,7 @@ length(plus.minus$V21) # 110647
 print(paste0("percentage of TNEs where - is before + ", nrow(neg.plus.minus) / length(plus.minus$V21) ))
 # ~ 30%
 
-minus.plus.dist <- ggplot() + geom_histogram(aes(x=neg.plus.minus), color="black", fill="white") + 
+minus.plus.dist <- ggplot() + geom_histogram(aes(x=neg.plus.minus), color="black", fill="white", binwidth = 10) + 
   scale_x_continuous(limits=c(-500,10)) # limit minimum x value to see distribution of values at higher res
 
 length(plus.minus$V21[plus.minus$V21 == 0]) #175

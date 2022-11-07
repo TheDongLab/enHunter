@@ -20,4 +20,8 @@ sort -R all_PD_cases.txt | head -n $lines
 
 
 #### creating all bigwig minus list #####
-gsutil -u amp-pd-dawg-analyses ls gs://fc-secure-4300ea7f-8e77-4f20-a20b-38417286eaaf/submissions/72e10f97-bfdd-4d9e-afc2-9ad9a1b19325/bam2bigwig_workflow/*/call-bam2bigwig/attempt-2/*.minus.normalized.bw
+gsutil ls gs://fc-secure-4300ea7f-8e77-4f20-a20b-38417286eaaf/submissions/72e10f97-bfdd-4d9e-afc2-9ad9a1b19325/bam2bigwig_workflow/'*'/call-bam2bigwig/attempt-2/'*'.minus.normalized.bw > all_minus_bigwigs.txt
+gsutil ls gs://fc-secure-4300ea7f-8e77-4f20-a20b-38417286eaaf/submissions/72e10f97-bfdd-4d9e-afc2-9ad9a1b19325/bam2bigwig_workflow/'*'/call-bam2bigwig/'*'.minus.normalized.bw >> all_minus_bigwigs.txt
+
+# for some reason there are two extra lines ... 
+awk -F'/' '{split($NF, a, "."); print a[1]}' all

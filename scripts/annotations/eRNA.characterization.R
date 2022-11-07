@@ -3,6 +3,8 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 
+setwd("~/Documents/college/dong_lab/code/enHunter")
+
 #how many TNES have each feature 
 # one feature, two feature, ...
 # TNE supported by x number features 
@@ -22,16 +24,16 @@ eRNA_minus <- fread("./input_files/characterization/eRNA.minus.characterize.xls"
 #### class 1
 class1_eRNA_minus <- eRNA_minus[class==1]
 
-print(paste0("Percentage of class 1 eRNAs : ", nrow(class1_eRNA_minus) / nrow(eRNA_minus))) # 29%
+print(paste0("Percentage of class 1 eRNAs : ", nrow(class1_eRNA_minus) / nrow(eRNA_minus))) # 27.8%
 
 #### class 2
 class2_eRNA_minus <- eRNA_minus[class==2]
 
-print(paste0("Percentage of class 2 eRNAs : ", nrow(class2_eRNA_minus) / nrow(eRNA_minus))) #20.8%
+print(paste0("Percentage of class 2 eRNAs : ", nrow(class2_eRNA_minus) / nrow(eRNA_minus))) #19.8%
 
 # enhancers defined by one or more genomic or epigenetic features 
-print(paste0("Percentage of class 2 eRNAs : ", 
-             (nrow(class1_eRNA_minus) + nrow(class2_eRNA_minus))/ nrow(eRNA_minus))) #49.8%
+print(paste0("Percentage of class 2 and class 1 eRNAs : ", 
+             (nrow(class1_eRNA_minus) + nrow(class2_eRNA_minus))/ nrow(eRNA_minus))) #47.6
 
 ####### PLUS STRAND ######
 eRNA_plus <- fread("./input_files/characterization/eRNA.plus.characterize.xls")
@@ -39,16 +41,16 @@ eRNA_plus <- fread("./input_files/characterization/eRNA.plus.characterize.xls")
 #### class 1
 class1_eRNA_plus <- eRNA_plus[class==1]
 
-print(paste0("Percentage of class 1 eRNAs : ", nrow(class1_eRNA_plus) / nrow(eRNA_plus))) # 29%
+print(paste0("Percentage of class 1 eRNAs : ", nrow(class1_eRNA_plus) / nrow(eRNA_plus))) # 21%
 
 #### class 2
 class2_eRNA_plus <- eRNA_plus[class==2]
 
-print(paste0("Percentage of class 2 eRNAs : ", nrow(class2_eRNA_plus) / nrow(eRNA_plus))) #20.8%
+print(paste0("Percentage of class 2 eRNAs : ", nrow(class2_eRNA_plus) / nrow(eRNA_plus))) #15.9%
 
 # enhancers defined by one or more genomic or epigenetic features 
 print(paste0("Percentage of feature supported eRNAs : ", 
-             (nrow(class1_eRNA_plus) + nrow(class2_eRNA_plus))/ nrow(eRNA_plus))) #49.9%
+             (nrow(class1_eRNA_plus) + nrow(class2_eRNA_plus))/ nrow(eRNA_plus))) #37.1%
 
 ###### graphs #######
 # class 1 vs 2 vs 3 enhancers (as defined in Dong et al. 2018)
@@ -95,18 +97,19 @@ class_graph_split
 
 # combining plus and minus data frames together 
 eRNA_plus <- eRNA_plus[, strand:="+"]
-nrow(eRNA_plus) # 110599
+nrow(eRNA_plus) # 66782
 eRNA_minus <- eRNA_minus[, strand:="-"]
-nrow(eRNA_minus) # 111368
+nrow(eRNA_minus) # 42815
 eRNA <- rbind(eRNA_plus, eRNA_minus)
-nrow(eRNA) # 221967
+nrow(eRNA) # 109597
 
-# 110599 + 111368 = 221967 
+# 66782 + 42815 = 109597
 # no rows are lost by merging 
 
 ## feature 1: distance to TSS 
 # NO TNEs have a distance of 0 to TSS
 
+############# TODO I think this is wrong  #####
 intergenic_minus <- round((nrow(eRNA_minus[f01.dis2TSS < 0]) / nrow(eRNA_minus) ) * 100, digits = 2)
 intergenic_txt_minus <- paste0("intergenic (N=", nrow(eRNA_minus[f01.dis2TSS < 0]), "; ", intergenic_minus, "%)")
 
@@ -117,7 +120,7 @@ dis2TSS_minus <- ggplot(eRNA_minus, aes(x=f01.dis2TSS/1000, fill=f01.dis2TSS < 0
   geom_histogram( binwidth=20) +  
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
-        panel.border = element_blank(), legend.title=element_blank(), legend.position=c(0.2, 0.7), text = element_text(size = 20)) +
+        panel.border = element_blank(), legend.title=element_blank(), legend.position=c(0.3, 0.9), text = element_text(size = 20)) +
   xlab("Distance to the TSS (x 1000 bp)") + 
   scale_x_continuous(n.breaks = 6) + scale_fill_manual(values = c("purple", "green"), labels = c(intronic_txt_minus, intergenic_txt_minus))
 dis2TSS_minus
@@ -275,6 +278,7 @@ feature_annot
 
 ggsave("./scripts/annotations/feature_annot.png", plot= feature_annot)
 
+####### TODO generate length.bed ######
 ## look at the TNE length distribution of different classes 
 dir <- "./input_files/TNE"
 plus.length <- fread(paste0(dir, "/plus.length.bed"))
@@ -303,6 +307,8 @@ minus_plus_bidir_class <- ggplot(test, aes(x=V21, fill=class)) +
   geom_histogram(bins = 200) + facet_grid(~class) +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
+
+minus_plus_bidir_class
 
 ggsave("./scripts/annotations/minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
 
@@ -365,6 +371,8 @@ eRNA_GWAS <- ggplot(eRNA, aes(x=f16.GWAS)) +
   geom_bar() + facet_grid(~class) + scale_y_continuous(trans="log10") + 
   xlab("Number of GWAS Snps") +   ggtitle("Distribution of GWAS snps localized to TNE") 
 
+eRNA_GWAS
+
 ggsave("./scripts/annotations/TNE_GWAS.png", eRNA_GWAS)
 
 ### number of eQTL SNPs
@@ -383,16 +391,16 @@ eRNA_gtexCaviar <- ggplot(eRNA, aes(x=f18.eSNP.gtexCaviar)) +
   xlab("Number of gtexDapg Snps") +   ggtitle("Distribution of gtexCaviar snps localized to TNE") 
 eRNA_gtexCaviar
 
-max(eRNA$f18.eSNP.gtexCaviar) # 107
+max(eRNA$f18.eSNP.gtexCaviar) # 170
 
 ggsave("./scripts/annotations/TNE_gtexCaviar.png", eRNA_gtexCaviar)
 
-eRNA_pval <- ggplot(eRNA, aes(x=f18.eSNP.pval)) + 
+eRNA_pval <- ggplot(eRNA, aes(x=f18.eSNP)) + 
   geom_bar() + facet_grid(~class) + scale_y_continuous(trans="log10") + 
   xlab("Number of gtexDapg Snps") +   ggtitle("Distribution of pval snps localized to TNE") 
 eRNA_pval
 
-max(eRNA$f18.eSNP.pval) # 18384
+max(eRNA$f18.eSNP) # 18384
 
 ggsave("./scripts/annotations/TNE_pval.png", eRNA_pval)
 

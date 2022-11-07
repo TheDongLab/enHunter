@@ -47,16 +47,20 @@ inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
 ## dis2TSS (distance btw middle of HiTNE and the nearest TSS)
 # ====================================
 echo "RUNNING ---- dis2TSS"
-## NOTE gencode.v37.annotation.genes.bed is the same as gencode.v37.annotation.genes.gtf.bed
 # fgrep -w gene $GENOME/Annotation/Genes/gencode.v37.annotation.gtf | sed 's/[;"]//g'  | awk '{OFS="\t"; print $1, $4-1, $5, $18"___"$10"___"$14, 0, $7}' > $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed
 # have to deal with intronic and intergenic separately
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
+
+# enforce strandedness 
+inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
+
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
 # $11 == 0 means TNE is located within a gene -> + value 
-awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
+awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4, $5, $6}' $inputbedstranded | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
+#awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4, $5, $6}' $inputbedstranded | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
 # intergenic ones 
 # $11 != 0 means TNE is located not within a gene -> code converts to - value 
-awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | sortBed) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
+awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4, $5, $6}' $inputbedstranded | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | sortBed | grep chr) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
 
 sort -k1,1 $TMPFILE > eRNA.$STRAND.f01.dis2TSS.txt
 
@@ -118,8 +122,8 @@ echo "RUNNING ---- CAGE"
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/blood_expressed_enhancers_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f08.CAGEbloodenhancer.txt
 
 # running Fisher test with differentially expressed enhancer tissue facets 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/diff_expressed_enh/all_diff_exp_enhancer_tissues_hg38_sorted.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f08.CAGEenhtissue.txt
-sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.txt | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/diff_expressed_enh/all_diff_exp_enhancer_tissues_hg38_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f08.CAGEenhtissue.intersect
+sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.intersect | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
 
 # all premissive enhancers -> liftover to hg38 
 # curl -s https://fantom.gsc.riken.jp/5/datafiles/latest/extra/Enhancers/human_permissive_enhancers_phase_1_and_2.bed.gz | gzip -d | liftOver stdin hg19ToHg38.over.chain.gz human_permissive_enhancers_phase_1_and_2_hg38.bed unMappedHumanPermissiveEnh # N=65386
@@ -210,7 +214,7 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Conservation/Ancora/HCNE_hg38_dan
 
 echo "RUNNING ---- GWAS"
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GWAS_catalog_20220810/GWAS_20220810.v1.02.bed -c -sorted | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f16.GWAS.txt
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GWAS_catalog_20220810/GWAS_20220810.v1.02.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f16.GWASDisease.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GWAS_catalog_20220810/GWAS_20220810.v1.02.bed -sorted -wb | sort -k4,4  > eRNA.$STRAND.f16.GWASDisease.intersect
 
 # ====================================
 # eQTL - overlap with eQTL snps 
@@ -234,17 +238,18 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GWAS_catalog_20220810/GWAS_202208
 #    zcat $file | awk -v tissue=$tissue 'NR>1 {OFS="\t"; split($1, a, "_"); print a[1], a[2] - 1, a[2], $1, tissue }' >> ./all_tissues/all_signif_varient_gene_pairs.bed 
 #done 
 
-sort -k1,1 -k2,2n all_signif_varient_gene_pairs.bed > all_signif_varient_gene_pairs_sorted.bed
+#ls 
+# sort -k1,1 -k2,2n all_signif_varient_gene_pairs.bed > all_signif_varient_gene_pairs_sorted.bed
 
 echo "RUNNING ---- eQTL"
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_hg38_UCSC_track/snp_gtexCaviar_sorted.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f18.eSNP.gtexCaviar.txt
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_hg38_UCSC_track/snp_gtexDapg_sorted.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f18.eSNP.gtexDapg.txt
 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_hg38_UCSC_track/snp_gtexCaviar_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.gtexCaviarDisease.txt
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_hg38_UCSC_track/snp_gtexDapg_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.gtexDapgDisease.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_hg38_UCSC_track/snp_gtexCaviar_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.gtexCaviarDisease.intersect
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_hg38_UCSC_track/snp_gtexDapg_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.gtexDapgDisease.intersect
 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQTL/all_tissues/all_signif_varient_gene_pairs_sorted.bed -sorted -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f18.eSNP.pval.txt
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQTL/all_tissues/all_signif_varient_gene_pairs_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.pvalDisease.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQTL/all_tissues/all_signif_varient_gene_pairs_sorted.bed -sorted -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f18.eSNP.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQTL/all_tissues/all_signif_varient_gene_pairs_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.Disease.intersect
 
 # ====================================
 # number of HiTNEs in host genes.  # based on strand information 
@@ -269,13 +274,6 @@ cut -f4,7 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f20.nHostgene.txt
 # ====================================
 cut -f4,6 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f21.lenHostgene.txt
 
-
-## move files generated to output directory 
-mv *.$STRAND.* $pipeline_path/output/$STRAND/
-
-## merge into a big file: eRNA.characterize.xls
-Rscript $pipeline_path/src/eRNA.characterize.merge.R `ls $pipeline_path/output/$STRAND/eRNA.$STRAND.f*.txt`
-
 # ====================================
 # Hi-C - overlap with PIR 
 # ====================================
@@ -284,14 +282,20 @@ echo "RUNNING ---- Hi-C"
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f22.HiC.txt
 
 #reports the intersected region of A and B with A's name 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -wb | sort -k4,4 > eRNA.$STRAND.f22.HiCPromoters.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -wb | sort -k4,4 > eRNA.$STRAND.f22.HiCPromoters.intersect
+
+## move files generated to output directory q
+mv *.$STRAND.* $pipeline_path/output/$STRAND/
+
+## merge into a big file: eRNA.characterize.xls
+Rscript $pipeline_path/src/eRNA.characterize.merge.R `ls $pipeline_path/output/$STRAND/eRNA.$STRAND.f*.txt`
 
 exit;
 
 # ============================
 # merging data files for both strands 
 # ============================
-
+### MOST LIKELY WILL BE DEPRECIATED AFTER WE FIND A BETTER METHOD
 ########## GWAS
 cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f16.GWASDisease.txt $pipeline_path/output/plus/eRNA.enrichment/eRNA.plus.f16.GWASDisease.txt | sort -k 9 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f16.GWASDisease.counts
 # just for testing 
