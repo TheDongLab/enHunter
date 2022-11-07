@@ -44,14 +44,14 @@ inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
 [ -e eRNA.$STRAND.random.bed ] || bedtools random -n 100000 -l 400 -seed 1234 -g $pipeline_path/inputs/ChromInfo.txt | intersectBed -a stdin -b <(cat $pipeline_path/inputs/toExclude.bed $inputbed | cut -f1-3 | sortBed | mergeBed -i -) -v > eRNA.$STRAND.random.bed
 
 # ====================================
-## dis2TSS (distance btw middle of HiTNE and the nearest TSS)
+## dis2TSS (distance btw middle of TNE and the nearest TSS)
 # ====================================
 echo "RUNNING ---- dis2TSS"
 # fgrep -w gene $GENOME/Annotation/Genes/gencode.v37.annotation.gtf | sed 's/[;"]//g'  | awk '{OFS="\t"; print $1, $4-1, $5, $18"___"$10"___"$14, 0, $7}' > $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed
 # have to deal with intronic and intergenic separately
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
 
-# enforce strandedness 
+# enforce strandedness ???
 inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
 
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
@@ -89,7 +89,6 @@ bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -be
 $pipeline_path/bin/getNormalizedCpGscore.awk random.$STRAND.seq.tab | sort -k1,1 > random.$STRAND.f05.Cp.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 random.f05.CpG.tab
 
-# ERROR: promoters.$STRAND.seq.txt is empty  
 grep protein_coding.protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
 
 $pipeline_path/bin/getNormalizedCpGscore.awk promoters.$STRAND.seq.txt | sort -k1,1 > promoters.$STRAND.f05.CpG.txt
