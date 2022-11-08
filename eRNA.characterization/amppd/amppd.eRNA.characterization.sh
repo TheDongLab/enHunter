@@ -51,8 +51,8 @@ echo "RUNNING ---- dis2TSS"
 # have to deal with intronic and intergenic separately
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
 
-# enforce strandedness 
-#inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
+# enforce strandedness ???
+# inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
 
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
 # $11 == 0 means TNE is located within a gene -> + value 
@@ -88,9 +88,7 @@ bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -be
 $pipeline_path/bin/getNormalizedCpGscore.awk random.$STRAND.seq.tab | sort -k1,1 > random.$STRAND.f05.Cp.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 random.f05.CpG.tab
 
-# ERROR: promoters.$STRAND.seq.txt is empty  
-# grep protein_coding.protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
-grep protein_coding___protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
+grep protein_coding__protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
 
 $pipeline_path/bin/getNormalizedCpGscore.awk promoters.$STRAND.seq.txt | sort -k1,1 > promoters.$STRAND.f05.CpG.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 promoters.f05.CpG.tab

@@ -93,6 +93,7 @@ class_graph_split <- ggplot(class_df_split, aes(x=strand, y=num_TNE, label=perce
   scale_fill_manual(values = c("blue", "red"))
 
 class_graph_split
+ggsave("./scripts/annotations/class_graph_split.png", class_graph_split)
 
 
 # combining plus and minus data frames together 
@@ -109,7 +110,6 @@ nrow(eRNA) # 109597
 ## feature 1: distance to TSS 
 # NO TNEs have a distance of 0 to TSS
 
-############# TODO I think this is wrong  #####
 intergenic_minus <- round((nrow(eRNA_minus[f01.dis2TSS < 0]) / nrow(eRNA_minus) ) * 100, digits = 2)
 intergenic_txt_minus <- paste0("intergenic (N=", nrow(eRNA_minus[f01.dis2TSS < 0]), "; ", intergenic_minus, "%)")
 
