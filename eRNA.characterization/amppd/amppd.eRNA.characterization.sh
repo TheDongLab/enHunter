@@ -265,6 +265,7 @@ cut -f4-5 $TMPFILE > eRNA.$STRAND.f19.Hostgene.txt
 
 grep -vw NA $TMPFILE | cut -f5 | sort | uniq -c | join -1 5 -2 2 -a 1 -e '0' -o '1.1,1.2,1.3,1.4,1.5,1.6,2.1' <(sort -k5,5 $TMPFILE) - | sed 's/ /\t/g' > $TMPFILE.2
 
+# number of TNE within the same gene
 cut -f4,7 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f20.nHostgene.txt
 
 # ====================================
