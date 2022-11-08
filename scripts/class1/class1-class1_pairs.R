@@ -28,7 +28,7 @@ class_plus.minus <- merge(plus.minus, eRNA_plus, by.x = "plus", by.y = "V1") %>%
 ##### making the bi directional pairing distance graphs 
 
 minus_plus_bidir_class <- ggplot(class_minus.plus , aes(x=distance, fill=class_pairing)) + 
-  geom_histogram(bins = 200) + facet_wrap(~class_pairing, scales = "free_y") +
+  geom_histogram(bins = 100) + facet_wrap(~class_pairing, scales = "free_y") +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
   theme(text = element_text(size = 20)) + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
@@ -38,7 +38,7 @@ minus_plus_bidir_class
 ggsave("minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
 
 plus_minus_bidir_class <- ggplot(class_plus.minus , aes(x=distance, fill=class_pairing)) + 
-  geom_histogram(bins = 200) + facet_wrap(~class_pairing, scales = "free_y") +
+  geom_histogram(bins = 60) + facet_wrap(~class_pairing, scales = "free_y") +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
   theme(text = element_text(size = 20)) + 
   ggtitle("Plus-Minus Orientation Peak Distance") 
@@ -70,7 +70,8 @@ write.table(class1_minus.plus_test, file="class1_minus_plus_test.txt", sep = "\t
 
 ggplot(class1_plus.minus, aes(x=distance)) + 
   geom_histogram(bins = 200) + 
-  scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
+  scale_x_continuous(limits=c(-1000,1000)) + 
+  xlab("Distance to Nearest Peak") + 
   ggtitle("Plus-Minus Orientation Peak Distance") 
 
 ggplot(class1_minus.plus, aes(x=distance)) + 
@@ -86,3 +87,17 @@ all_minus <- unique(c(unlist(class1_minus.plus_test %>% select(minus)) , unlist(
 
 all_plus <- unique(c(unlist(class1_minus.plus_test %>% select(plus)) , unlist(class1_plus.minus_test %>% select(plus)))) 
 # number of unique items = 27403 (matches shell script )
+
+##### out of the birdirectional pairs with a peak distance of 0, what are their class break downs?
+plus.minus.class.zero <- class_plus.minus[distance == 0]
+minus.plus.class.zero <- class_minus.plus[distance == 0]
+
+class_zero <- ggplot(plus.minus.class.zero, aes(x=class_pairing)) +
+  geom_bar() + geom_text(aes(label=..count..), stat="count", vjust=0, colour="red") + 
+  xlab("Class Pairing") + theme(axis.line = element_line(), panel.grid.major = element_blank(),
+                                panel.grid.minor = element_blank(), panel.background = element_blank()) +
+  ggtitle("Class Pairings of Bidirectional Pairs with 0 bp Distance") 
+
+class_zero
+
+ggsave("class_zero.png", plot=class_zero)

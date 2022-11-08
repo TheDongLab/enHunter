@@ -1,1 +1,0 @@
-gsutil ls gs://fc-secure-4300ea7f-8e77-4f20-a20b-38417286eaaf/submissions/ae05f833-cac2-42e4-9cd9-24fb0cd797ed/bam2bigwig_workflow

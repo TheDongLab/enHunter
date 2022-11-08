@@ -45,6 +45,7 @@ inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
 
 # ====================================
 ## dis2TSS (distance btw middle of HiTNE and the nearest TSS)
+## dis2TSS (distance btw middle of TNE and the nearest TSS)
 # ====================================
 echo "RUNNING ---- dis2TSS"
 # fgrep -w gene $GENOME/Annotation/Genes/gencode.v37.annotation.gtf | sed 's/[;"]//g'  | awk '{OFS="\t"; print $1, $4-1, $5, $18"___"$10"___"$14, 0, $7}' > $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed
