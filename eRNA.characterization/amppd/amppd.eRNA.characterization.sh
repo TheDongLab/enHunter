@@ -44,7 +44,6 @@ inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
 [ -e eRNA.$STRAND.random.bed ] || bedtools random -n 100000 -l 400 -seed 1234 -g $pipeline_path/inputs/ChromInfo.txt | intersectBed -a stdin -b <(cat $pipeline_path/inputs/toExclude.bed $inputbed | cut -f1-3 | sortBed | mergeBed -i -) -v > eRNA.$STRAND.random.bed
 
 # ====================================
-## dis2TSS (distance btw middle of HiTNE and the nearest TSS)
 ## dis2TSS (distance btw middle of TNE and the nearest TSS)
 # ====================================
 echo "RUNNING ---- dis2TSS"
