@@ -52,15 +52,14 @@ echo "RUNNING ---- dis2TSS"
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
 
 # enforce strandedness 
-inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
+#inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
 
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
 # $11 == 0 means TNE is located within a gene -> + value 
-awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4, $5, $6}' $inputbedstranded | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
-#awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4, $5, $6}' $inputbedstranded | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
+awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
 # intergenic ones 
 # $11 != 0 means TNE is located not within a gene -> code converts to - value 
-awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4, $5, $6}' $inputbedstranded | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | sortBed | grep chr) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
+awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11!=0' | cut -f1-4 | sort -k1,1 -k2,2n -u | closestBed -a - -b <(awk '{OFS="\t"; tss=($6=="+")?$2:($3-1);  print $1, tss, tss+1, $4, $3-$2, $6}' $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | sortBed | grep chr) -D b -t first | awk '{OFS="\t"; print $4,($11<0)?$11:-$11;}' >> $TMPFILE
 
 sort -k1,1 $TMPFILE > eRNA.$STRAND.f01.dis2TSS.txt
 
@@ -90,7 +89,8 @@ $pipeline_path/bin/getNormalizedCpGscore.awk random.$STRAND.seq.tab | sort -k1,1
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 random.f05.CpG.tab
 
 # ERROR: promoters.$STRAND.seq.txt is empty  
-grep protein_coding.protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
+# grep protein_coding.protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
+grep protein_coding___protein_coding $GENOME/Annotation/Genes/gencode.v37.annotation.bed12 | awk '{OFS="\t"; s=($6=="+")?($2-200):($3-200); if(s<0) s=0; print $1,s,s+400,$4}' | bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed stdin -fo promoters.$STRAND.seq.txt
 
 $pipeline_path/bin/getNormalizedCpGscore.awk promoters.$STRAND.seq.txt | sort -k1,1 > promoters.$STRAND.f05.CpG.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 promoters.f05.CpG.tab
@@ -284,7 +284,7 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg
 #reports the intersected region of A and B with A's name 
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -wb | sort -k4,4 > eRNA.$STRAND.f22.HiCPromoters.intersect
 
-## move files generated to output directory q
+## move files generated to output directory
 mv *.$STRAND.* $pipeline_path/output/$STRAND/
 
 ## merge into a big file: eRNA.characterize.xls
