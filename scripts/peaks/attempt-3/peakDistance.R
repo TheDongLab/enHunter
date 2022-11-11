@@ -1,7 +1,6 @@
 library(data.table)
 library(ggplot2)
 library(dplyr)
-setwd("~/Documents/college/dong_lab/code/enHunter/")
 
 ### this is different than attempt-2 as it contains the narrowPeak distances of TNEs 
 # with 8000 sample family significance in step 6 

@@ -11,7 +11,7 @@ plus.med <- median(plus$V2, na.rm=TRUE)
 
 plusLength <- ggplot(plus, aes(x=V2)) + 
   geom_histogram(fill="gray", binwidth=0.02)  + 
-  scale_x_continuous(trans="log10", n.breaks= 10) + 
+  scale_x_continuous(trans="log10", n.breaks= 15) + 
   scale_y_continuous( n.breaks= 10) + 
   theme_bw() + 
   geom_vline(xintercept=plus.med, color="red", linetype="dashed") + 
@@ -20,7 +20,7 @@ plusLength <- ggplot(plus, aes(x=V2)) +
                panel.background = element_blank(), 
         text = element_text(size = 20),
         panel.border = element_blank()) + xlab("TNE Length (bp)") + ylab("Count of TNEs") + 
-  annotate("text", x=plus.med+240, y=8000, size = 6, 
+  annotate("text", x=plus.med+240, y=5000, size = 6, 
            label=paste0("median: ", round(plus.med, digits = 2), " bp"), color="red")
 
 plusLength
@@ -42,7 +42,7 @@ minusLength <- ggplot(minus, aes(x=V2)) +
         panel.background = element_blank(), 
         panel.border = element_blank(), 
         text = element_text(size = 20)) + xlab("TNE Length (bp)") + ylab("Count of TNEs") +
-  annotate("text", x = minus.med+240, y=8000, size = 6,
+  annotate("text", x = minus.med+240, y=5000, size = 6,
            label=paste0("median: ", round(minus.med, digits = 2), " bp"), color="red")
 
 minusLength

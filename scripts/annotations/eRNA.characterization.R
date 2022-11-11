@@ -3,8 +3,6 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 
-setwd("~/Documents/college/dong_lab/code/enHunter")
-
 #how many TNES have each feature 
 # one feature, two feature, ...
 # TNE supported by x number features 
@@ -184,7 +182,7 @@ RPM_minus <- ggplot(eRNA_minus, aes(x=f03.RPM)) +
         panel.border = element_blank(), text = element_text(size = 20)) + 
   scale_x_log10() + geom_vline(xintercept=minus.RPM.med, color="red", linetype="dashed") +
   xlab("RPM") + ylab("Count of TNEs") + 
-  annotate("text", x = minus.RPM.med+1, y=8000, size = 6,
+  annotate("text", x = minus.RPM.med+1, y=5000, size = 6,
            label=paste0("median: ", round(minus.RPM.med, digits = 2)), color="red")
 RPM_minus
 ggsave("./scripts/annotations/RPM_minus.png", RPM_minus)
@@ -196,9 +194,10 @@ RPM_plus <- ggplot(eRNA_plus, aes(x=f03.RPM)) +
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(), panel.background = element_blank(), 
         panel.border = element_blank(), text = element_text(size = 20)) + 
-  scale_x_log10() + geom_vline(xintercept=plus.RPM.med, color="red", linetype="dashed") +
+  scale_x_log10() +
+  geom_vline(xintercept=plus.RPM.med, color="red", linetype="dashed") +
   xlab("RPM") + ylab("Count of TNEs") + 
-  annotate("text", x = plus.RPM.med+1, y=8000, size = 6,
+  annotate("text", x = plus.RPM.med+1, y=5000, size = 6,
            label=paste0("median: ", round(plus.RPM.med, digits = 2)), color="red")
 RPM_plus
 ggsave("./scripts/annotations/RPM_plus.png", RPM_plus)
@@ -278,7 +277,6 @@ feature_annot
 
 ggsave("./scripts/annotations/feature_annot.png", plot= feature_annot)
 
-####### TODO generate length.bed ######
 ## look at the TNE length distribution of different classes 
 dir <- "./input_files/TNE"
 plus.length <- fread(paste0(dir, "/plus.length.bed"))
@@ -290,11 +288,11 @@ length.df <- rbind( merge(eRNA_plus, plus.length, by="V1"),
   mutate(class = as.factor(class))
 
 class_lengths <- ggplot(length.df, aes(x=V2, fill=class)) + 
-  geom_histogram(binwidth=0.05) + facet_grid(~class) + 
+  geom_histogram(binwidth=0.05) + facet_wrap(~class, scales = "free_y") + 
   scale_x_log10() + xlab("TNE Length") 
 
 class_lengths
-ggsave("./scripts/annotations/class_lengths.png", plot= class_lengths)
+ggsave("./scripts/annotations/plus_minus_class_lengths.png", plot= class_lengths)
 
 ## bidirectional orientation of highly supported TNEs 
 wd <- "./input_files/closest/"
@@ -304,7 +302,7 @@ minus.plus <- fread(paste0(wd, "minus.plus.bed")) %>% select(V4, V14, V21)
 test <- merge( eRNA, minus.plus, by.x="V1", by.y="V4") %>% mutate(class=as.factor(class))
 
 minus_plus_bidir_class <- ggplot(test, aes(x=V21, fill=class)) + 
-  geom_histogram(bins = 200) + facet_grid(~class) +
+  geom_histogram(bins = 200) + facet_grid(~class, scales = "free_y") +
   scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
 
@@ -336,7 +334,7 @@ max_num_feature_ids <- feature_ct %>% filter(num == max(feature_ct$num) ) %>%
   select(ID, strand, class, vals) %>% mutate(num_features= max(feature_ct$num))
 # maximum number of features is 8
 
-testing <- feature_ct %>% filter(VISTA == 1 & num == max(feature_ct$num) - 1) %>% 
+testing <- feature_ct %>% filter(num == max(feature_ct$num) - 1) %>% 
   select(ID, strand, class, vals) %>% mutate(num_features= max(feature_ct$num) - 1)
 
 max_num_feature_ids <- rbind(max_num_feature_ids, testing)
@@ -355,12 +353,12 @@ feature_ct <- merge(feature_ct, counts)
 
 #feature_ct <- feature_ct %>% group_by(num) %>% summarise(count=n()) %>% mutate(per = count/sum(count))
 
-# TODO this would be more clear as a table 
-
-# TODO AYIAAAA 
-TNE_feature_count <- ggplot(feature_ct, aes(x=num, label=count, y=count)) + 
-  geom_bar(stat="identity") + 
-  xlab("Number of Features") 
+TNE_feature_count <- ggplot(feature_ct, aes(x= num)) + 
+  geom_bar() + xlab("Number of Features") + 
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        panel.border = element_blank(), text = element_text(size = 20)) + 
+  scale_y_continuous(n.breaks=14)
 TNE_feature_count
 
 ggsave("./scripts/annotations/TNE_feature_count.png", TNE_feature_count)

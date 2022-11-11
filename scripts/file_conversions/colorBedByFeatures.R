@@ -8,19 +8,19 @@
 #args <- commandArgs(TRUE)
 
 #features <- read.table(args[1])
-features <- read.table("./input_files/characterization/eRNA.plus.characterize.xls")
+features <- read.table("./input_files/characterization/eRNA.minus.characterize.xls")
 
 df=subset(features, select=c(f06.TFBS, f07.P300, f08.CAGEbloodenhancer, f09.chromHMM_blood, f12.DNaseROADMAP, f15.HCNE))
 df$f06.TFBS=ifelse(df$f06.TFBS>=5,1,0)
 df[df>0]=1;
-features$class=apply(df,1,sum)
+features$features=apply(df,1,sum)
 
 #strand=args[2]
-strand <- "plus"
+strand <- "minus"
 
 find_rbg <- function(x) {
   
-  class <- x[["class"]]
+  class <- x[["features"]]
   
   rbg <- "0,0,0" 
   
@@ -64,13 +64,19 @@ find_rbg <- function(x) {
 }
 
 features$rbg <- apply(features,1,find_rbg)
+features$strand <- "-"
+
+#write.table(features, paste0("eRNA.minus.characterize", ".xls"), sep="\t", quote = F, col.names = NA, row.names = T)
 
 final_df <- subset(features, select=c(rbg))
 
+
+# TO CREATE BED FILES FOR UCSC GENOME BROWSER VISUALIZATION
 write.table(final_df, paste0("rbg_", strand, ".tsv"), sep="\t", 
             quote = F, col.names = F, row.names = T)
 
 # sort -k4,4 ucsc.plus.narrowPeak.bed > ucsc.plus.sorted.narrowPeak.bed
-# join -1 4 ucsc.plus.sorted.narrowPeak.bed rbg_plus.tsv | awk 'OFS="\t" {print $2, $3, $4, $1, $5, $6, $7, $8, $9}' > test.bed
+# sort -k4,4 rbg_plus.tsv > sorted_rbg_plus.tsv
+# join -1 4 ucsc.plus.sorted.narrowPeak.bed sorted_rbg_plus.tsv | awk 'OFS="\t" {print $2, $3, $4, $1, $5, $6, $7, $8, $9}' > test.bed
 
-# join -1 4 ucsc.minus.sorted.narrowPeak.bed rbg_minus.tsv | awk 'OFS="\t" {print $2, $3, $4, $1, $5, $6, $7, $8, $9}' > test.bed
+# join -1 4 ucsc.minus.sorted.narrowPeak.bed sorted_rbg_minus.tsv | awk 'OFS="\t" {print $2, $3, $4, $1, $5, $6, $7, $8, $9}' > test.bed

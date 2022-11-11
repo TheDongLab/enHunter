@@ -163,7 +163,10 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/human_permissive_enhancers_p
 
 # E6, E7, and E12 for enhancer (http://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html#core_15state)
 echo "RUNNING ---- Histone"
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Histone/15_coreMarks_hg38lift_segments.E6E7E12.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f09.chromHMM_blood.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Histone/final_15_coreMarks_hg38lift_segments.E6E7E12.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f09.chromHMM_blood.txt
+
+## testing to make sure that chromHMM blood counts are right 
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Histone/final_15_coreMarks_hg38lift_segments.E6E7E12.bed -wb | sort -k4,4 > eRNA.$STRAND.f09.chromHMM_blood.intersect
 
 # ====================================
 # overlap with VISTA enhancers
@@ -250,7 +253,7 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQT
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQTL/all_tissues/all_signif_varient_gene_pairs_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f18.eSNP.Disease.intersect
 
 # ====================================
-# number of HiTNEs in host genes.  # based on strand information 
+# number of TNEs in host genes.  # based on strand information 
 # ====================================
 # need a new bedtools version to run 
 module load bedtools/2.26.0
@@ -277,11 +280,10 @@ cut -f4,6 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f21.lenHostgene.txt
 # Hi-C - overlap with PIR 
 # ====================================
 echo "RUNNING ---- Hi-C"
-# TODO test this because it hasn't been run before 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f22.HiC.txt
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/final_PCHiC_peak_matrix_cutoff5_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f22.PCHiC.txt
 
 #reports the intersected region of A and B with A's name 
-intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/PCHiC_peak_matrix_cutoff5_hg38.bed -wb | sort -k4,4 > eRNA.$STRAND.f22.HiCPromoters.intersect
+intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/final_PCHiC_peak_matrix_cutoff5_hg38.bed -wb | sort -k4,4 > eRNA.$STRAND.f22.PCHiCPromoters.intersect
 
 ## move files generated to output directory
 mv *.$STRAND.* $pipeline_path/output/$STRAND/
