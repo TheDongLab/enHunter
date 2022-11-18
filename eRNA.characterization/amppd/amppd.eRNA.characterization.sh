@@ -101,6 +101,7 @@ $pipeline_path/bin/getNormalizedCpGscore.awk promoters.$STRAND.seq.txt | sort -k
 # number of TF ChIP-seq peaks in the region (only if it occurs in at least one cell lines ## only TF peaks supported by >=5 cell lines are counted)
 echo "RUNNING ---- TFBS"
 awk '$6>=1' $EXTERNAL_FEATURE/TFBS/count.encRegTfbsClusteredWithCells.hg38.bed | intersectBed -a $inputbed -b stdin -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f06.TFBS.txt
+awk '$6>=1' $EXTERNAL_FEATURE/TFBS/count.encRegTfbsClusteredWithCells.hg38.bed | intersectBed -a $inputbed -b stdin -wb | sort -k4,4  > eRNA.$STRAND.f06.TFBS.intersect
 
 # Define TF hotspot (regions with >=5 different TFs bound)
 # might be used somewhere else -> dont need 
