@@ -22,26 +22,26 @@ cut -f 2 GWAS_20220810.v1.02.counts | paste -sd+ | bc
 
 
 ######## minus strand 
-sort -k 9 eRNA.minus.f16.GWASDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.minus.f16.GWASDisease.counts
-cut -f 2 eRNA.minus.f16.GWASDisease.counts | paste -sd+ | bc
+sort -k 9 eRNA.minus.f16.GWASDisease.intersect | bedtools groupby -g 9 -c 9 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > eRNA.enrichment/eRNA.minus.f16.GWASDisease.counts
 
-sort -k 1 eRNA.minus.f16.GWASDisease.counts | bedtools groupby -g 1 -c 2 -o sum > eRNA.minus.f16.GWASDisease.counts.v2
+#cut -f 2 eRNA.minus.f16.GWASDisease.counts | paste -sd+ | bc
+#sort -k 1 eRNA.minus.f16.GWASDisease.counts | bedtools groupby -g 1 -c 2 -o sum > eRNA.minus.f16.GWASDisease.counts.v2
 
-sort -k 9 eRNA.minus.f18.eSNP.gtexCaviarDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.minus.f18.eSNP.gtexCaviarDisease.counts
-cut -f 2 eRNA.minus.f18.eSNP.gtexCaviarDisease.counts | paste -sd+ | bc
+sort -k 9 eRNA.minus.f18.eSNP.gtexCaviarDisease.intersect | bedtools groupby -g 9 -c 9 -o count > eRNA.enrichment/eRNA.minus.f18.eSNP.gtexCaviarDisease.counts
+#cut -f 2 eRNA.minus.f18.eSNP.gtexCaviarDisease.counts | paste -sd+ | bc
 
-sort -k 9 eRNA.minus.f18.eSNP.gtexDapgDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.minus.f18.eSNP.gtexDapgDisease.counts
-cut -f 2 eRNA.minus.f18.eSNP.gtexDapgDisease.counts | paste -sd+ | bc
+sort -k 9 eRNA.minus.f18.eSNP.gtexDapgDisease.intersect | bedtools groupby -g 9 -c 9 -o count > eRNA.enrichment/eRNA.minus.f18.eSNP.gtexDapgDisease.counts
+#cut -f 2 eRNA.minus.f18.eSNP.gtexDapgDisease.counts | paste -sd+ | bc
 
-sort -k 9 eRNA.minus.f18.eSNP.pvalDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.minus.f18.eSNP.pvalDisease.counts
-cut -f 2 eRNA.minus.f18.eSNP.pvalDisease.counts | paste -sd+ | bc
+sort -k 9 eRNA.minus.f18.eSNP.Disease.intersect | bedtools groupby -g 9 -c 9 -o count > eRNA.enrichment/eRNA.minus.f18.eSNP.Disease.counts
+#cut -f 2 eRNA.minus.f18.eSNP.pvalDisease.counts | paste -sd+ | bc
 
 ######### plus strand 
 module load bedtools/2.23.0
-sort -k 9 ../eRNA.plus.f16.GWASDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f16.GWASDisease.counts
+sort -k 9 ../eRNA.plus.f16.GWASDisease.intersect | bedtools groupby -g 9 -c 9 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > eRNA.plus.f16.GWASDisease.counts
 
-sort -k 9 ../eRNA.plus.f18.eSNP.gtexCaviarDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f18.eSNP.gtexCaviarDisease.counts
+sort -k 9 ../eRNA.plus.f18.eSNP.gtexCaviarDisease.intersect | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f18.eSNP.gtexCaviarDisease.counts
 
-sort -k 9 ../eRNA.plus.f18.eSNP.gtexDapgDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f18.eSNP.gtexDapgDisease.counts
+sort -k 9 ../eRNA.plus.f18.eSNP.gtexDapgDisease.intersect | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f18.eSNP.gtexDapgDisease.counts
 
-sort -k 9 ../eRNA.plus.f18.eSNP.pvalDisease.txt | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f18.eSNP.pvalDisease.counts
+sort -k 9 ../eRNA.plus.f18.eSNP.Disease.intersect | bedtools groupby -g 9 -c 9 -o count > eRNA.plus.f18.eSNP.Disease.counts

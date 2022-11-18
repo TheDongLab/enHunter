@@ -63,7 +63,7 @@ p <- ggplot(signif, aes(x=reorder(Trait, -pval), y=-log10(pval))) +
   geom_bar(stat="identity") + 
   coord_flip() + geom_hline(yintercept=-log10(N), size=.5,linetype = 2)
 
-ggsave(args[3], p)
+ggsave(args[3], p, width = 20)
 ### all disease traits (grouped together) -> should I group together some categories?
 #total <- total[, pval := as.numeric(pval)]
 

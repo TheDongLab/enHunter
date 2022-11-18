@@ -43,7 +43,7 @@ task ReadCount {
   }
     
   command <<< 
-    featureCounts -a ~{saf} -F SAF -f -s 1 -p --verbose -o ~{sample_name} ~{sep=' ' input_bams}
+    featureCounts -a ~{TNE} -F SAF -f -s 1 -p --verbose -o ~{sample_name} ~{sep=' ' input_bams}
   >>>
   
   output {
@@ -52,11 +52,11 @@ task ReadCount {
   }
   
   runtime {
-    docker: "rwang429/enhunter-filter:latest"
+    docker: "rwang429/raw_read_count:latest"
     memory: "${GB_memory}GB"
     disks: "local-disk ${GB_disk} SSD"
     cpu: "${n_CPU}"
-    preemptible: 1
+    preemptible: 0
     zones: "us-central1-a us-central1-b"
   }
   

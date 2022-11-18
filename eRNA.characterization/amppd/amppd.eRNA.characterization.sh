@@ -121,6 +121,7 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/blood_expressed_enhancers_hg
 
 # running Fisher test with differentially expressed enhancer tissue facets 
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/CAGE/diff_expressed_enh/all_diff_exp_enhancer_tissues_hg38_sorted.bed -sorted -wb | sort -k4,4 > eRNA.$STRAND.f08.CAGEenhtissue.intersect
+# .counts file is used to do enrichment analysis 
 sort -k 10 eRNA.$STRAND.f08.CAGEenhtissue.intersect | bedtools groupby -g 10 -c 10 -o count > eRNA.$STRAND.f08.CAGEenhtissue.counts
 
 # all premissive enhancers -> liftover to hg38 
@@ -256,7 +257,7 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQT
 # number of TNEs in host genes.  # based on strand information 
 # ====================================
 # need a new bedtools version to run 
-module load bedtools/2.26.0
+module load bedtools/2.25.0
 # enforce strandedness 
 inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
 
