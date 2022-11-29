@@ -10,6 +10,7 @@ eqtl <- eqtl[,4:9]
 colnames(eqtl) <- c("TNE", "chr", "start", "end", "rsid", "tissue")
 # the start and end coordinates are of the SNP 
 
+# merge by the SAME snp on GWAS and eQTL 
 all_merged_snps <- merge(gwas, eqtl, by=c("chr", "start", "end", "rsid", "TNE"))
 #blood_snps <- all_merged_snps[tissue == "Whole_Blood"]
 
