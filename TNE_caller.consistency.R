@@ -7,19 +7,44 @@
 args<-commandArgs(TRUE)
 
 SAMPLE_GROUP = args[1]
-list_bw_file = args[2]
+SampleIDs = args[2]
+SampleRDBGs = args[3]
+SamplemeanRPM = args[4]
 
-list_bw = read.table(list_bw_file, header = F, col.names = c('sampleID','bigwigFile'), stringsAsFactors = F)
+
+# pass in both the meanRPM file and rdbg file as a string and store as a vector 
+# then localize these files based on the paths 
+
+#OR I can write the meanRPM and rdbg file paths to a file which I then read in 
+#TODO: write the files of 
+#1. sample IDs 
+#2. meanRPM files 
+#3. rdbg files 
+
+#TODO edit! 
+#list_bw = read.table(list_bw_file, header = F, col.names = c('sampleID','bigwigFile'), stringsAsFactors = F)
+#list_bw = read.table(list_bw_file, header = F, col.names = c('bigwigFile'), stringsAsFactors = F)
+
+sampleID = read.table(SampleIDs, header = F, col.names = c('ID'), stringsAsFactors = F)
+rdbgs = read.table(SampleRDBGs, header = F, col.names = c('RDBG'), stringsAsFactors = F)
+meanRPM = read.table(SamplemeanRPM, header = F, col.names = c('RPM'), stringsAsFactors = F)
 
 EXP=data.frame(); PV=data.frame(); 
-for(bw_file in list_bw$bigwigFile){
-  print(bw_file)
+
+for(i in 1:nrow(sampleID)){
+  cur_sampleName <- sampleID$ID[[i]]
+
+  print(cur_sampleName)
+
+  cur_meanRPM <- meanRPM$RPM[[i]]
+  cur_rdbg <- rdbgs$RDBG[[i]]
+
   # read background
-  df=read.table(paste0(bw_file,".", SAMPLE_GROUP, ".rdbg"), header=F)[,2] # mean RPM (mean0 from bigWigAverageOverBed)
+  df=read.table(cur_rdbg, header=F)[,2] # mean RPM (mean0 from bigWigAverageOverBed)
   Fn=ecdf(df)
   
   # read expression
-  expression=read.table(paste0(bw_file,".", SAMPLE_GROUP, ".eRNA.meanRPM"), header=F)
+  expression=read.table(cur_meanRPM, header=F)
   pvalue=as.numeric(format(1-Fn(expression[,2]), digits=3));
 
   # merge
@@ -27,12 +52,12 @@ for(bw_file in list_bw$bigwigFile){
   else {EXP=cbind(EXP, expression[,2]); PV=cbind(PV, pvalue); }
 }
 
-colnames(EXP)=c("locus",list_bw$sampleID); colnames(PV)=c("locus",list_bw$sampleID); 
+colnames(EXP)=c("locus", sampleID$ID); colnames(PV)=c("locus", sampleID$ID); 
 write.table(EXP, "eRNA.tmp5.meanRPM.xls", col.names=T, row.names=F, sep="\t", quote=F)
 write.table(PV,  "eRNA.tmp5.pvalues.xls", col.names=T, row.names=F, sep="\t", quote=F)
 
 ## binomial test for the significant HTNE (p<0.05)
-N=nrow(list_bw)
+N=nrow(sampleID)
 binomial.pvalues = sapply(rowSums(PV[,-1]<=0.05), function(x) binom.test(x,N,0.05,'greater')$p.value)
 # using the Holm-Bonferroni method (AKA step-down Bonferroni)  to correct for multiple test
 p.adjusted = cbind(binomial.pvalues=binomial.pvalues, p.adjusted.HB = p.adjust(binomial.pvalues, method = "holm"), p.adjusted.bonferroni=p.adjust(binomial.pvalues, method = "bonferroni"),p.adjusted.FDR=p.adjust(binomial.pvalues, method = "fdr"))

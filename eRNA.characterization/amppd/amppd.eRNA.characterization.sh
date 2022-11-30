@@ -51,9 +51,6 @@ echo "RUNNING ---- dis2TSS"
 # have to deal with intronic and intergenic separately
 # intronic ones (if located in two genes' intron, just randomly pick the first hit in the file.)
 
-# enforce strandedness ???
-# inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
-
 TMPFILE=`mktemp /tmp/example.XXXXXXXXXX`
 # $11 == 0 means TNE is located within a gene -> + value 
 awk '{OFS="\t"; mid=int(($3+$2)/2); print $1, mid, mid+1,$4}' $inputbed | closestBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -d -t first | awk '$11==0' | awk '{OFS="\t"; tss=($10=="+")?$6:$7; d=tss-$2; if(d<0) d=-d; print $4, d;}' > $TMPFILE
@@ -259,12 +256,10 @@ intersectBed -a $inputbed -b $EXTERNAL_FEATURE/GTEx_p_value/GTEx_Analysis_v8_eQT
 # ====================================
 # need a new bedtools version to run 
 module load bedtools/2.25.0
-# enforce strandedness 
-inputbedstranded=$pipeline_path/inputs/$STRAND/eRNA_stranded.bed
 
 # if overlap with multiple genes, take the longest one
-#intersectBed -a $inputbed -b $GENOME/Annotation/Genes/gencode.v37.annotation.gtf.genes.bed -wao | awk '{OFS="\t"; print $0,$7-$6;}' | sort -k4,4 -k12,12nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,8,12 | sed 's/\t\./\tNA/g' > $TMPFILE
-intersectBed -a $inputbedstranded -b $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed -wao -s | awk '{OFS="\t"; print $0,$9-$8;}' | sort -k4,4 -k14,14nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,10,14 | sed 's/\t\./\tNA/g' > $TMPFILE
+intersectBed -a $inputbed -b $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed -wao | awk '{OFS="\t"; print $0,$7-$6;}' | sort -k4,4 -k12,12nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,8,12 | sed 's/\t\./\tNA/g' > $TMPFILE
+#intersectBed -a $inputbedstranded -b $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed -wao -s | awk '{OFS="\t"; print $0,$9-$8;}' | sort -k4,4 -k14,14nr | awk '{OFS="\t"; if($4!=id) {print; id=$4;}}' | cut -f1-4,10,14 | sed 's/\t\./\tNA/g' > $TMPFILE
 # host gene (if any); otherwise NA
 cut -f4-5 $TMPFILE > eRNA.$STRAND.f19.Hostgene.txt
 

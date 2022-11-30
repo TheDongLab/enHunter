@@ -73,4 +73,3 @@ samtools view -b -o chr1-BF-1005-SVM0_5T1.star.bam BF-1005-SVM0_5T1.star.bam chr
 
 ###### strand split testing pt 3 (10/31/2022) 
 samtools view -b -o $output $input chr1:25553420-25555318 -d XS:-
-

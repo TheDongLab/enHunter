@@ -91,7 +91,7 @@ class_graph_split <- ggplot(class_df_split, aes(x=strand, y=num_TNE, label=perce
   scale_fill_manual(values = c("blue", "red"))
 
 class_graph_split
-ggsave("./scripts/annotations/class_graph_split.png", class_graph_split)
+ggsave("./scripts/annotations/class_graph_split.pdf", class_graph_split)
 
 
 # combining plus and minus data frames together 
