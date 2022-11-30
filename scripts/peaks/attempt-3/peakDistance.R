@@ -17,18 +17,19 @@ minus.plus.dist <- ggplot(minus.plus, aes(x=V21)) +
 
 minus.plus.dist
 
-dist_minus.plus <- ggplot(minus.plus, aes(x=V21, y=..density..)) + 
+dist_minus.plus <- ggplot(minus.plus, aes(x=V21)) + 
   geom_histogram(color="black", fill="white", binwidth = 30) + 
-  geom_density() + 
   xlab("Distance to Nearest Peak") + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
 
 dist_minus.plus
 
-dist_density_minus.plus <- ggplot(minus.plus, aes(x=V21, y=..density..)) + 
-  geom_histogram(color="black", fill="white", binwidth = 5) + 
-  scale_x_continuous(limits=c(-100,100)) + 
-  geom_density() + 
+ggsave("full-minus.plus.distance.density.plot.pdf",
+       plot=dist_minus.plus, device="pdf")
+
+dist_density_minus.plus <- ggplot(minus.plus, aes(x=V21)) + 
+  geom_histogram(color="black", fill="white", binwidth = 30) + 
+  scale_x_continuous(limits=c(-1000,1000)) + 
   xlab("Distance to Nearest Peak") + 
   ggtitle("Minus-Plus Orientation Peak Distance") 
 
@@ -62,18 +63,30 @@ minus.plus.dist
 median(minus.plus)
 ####### with the plus minus orientation 
 
-plus.minus <- fread("./inputs/plus.minus.bed", sep = "\t")
+plus.minus <- fread("./input_files/closest/plus.minus.bed", sep = "\t")
 
+# log transformed distance
 plus.minus.dist <- ggplot(plus.minus, aes(x=V21)) + 
   geom_histogram(color="black", fill="white") + 
   scale_y_continuous(trans="log2")
 
 plus.minus.dist
 
-dist_density_plus.minus <- ggplot(plus.minus, aes(x=V21, y=..density..)) + 
+# total distance 
+dist_plus.minus <- ggplot(plus.minus, aes(x=V21)) + 
+  geom_histogram(color="black", fill="white", binwidth = 30) + 
+  xlab("Distance to Nearest Peak") + 
+  ggtitle("Plus-Minus Orientation Peak Distance") 
+
+dist_plus.minus
+
+ggsave("full-plus.minus.distance.density.plot.pdf",
+       plot=dist_plus.minus, device="pdf")
+
+# distance cut to -1000 and 1000
+dist_density_plus.minus <- ggplot(plus.minus, aes(x=V21)) + 
   geom_histogram(color="black", fill="white", binwidth = 30) + 
   scale_x_continuous(limits=c(-1000,1000)) + 
-  geom_density() + 
   xlab("Distance to Nearest Peak") + ggtitle("Plus-Minus Orientation Peak Distance")
 
 dist_density_plus.minus 

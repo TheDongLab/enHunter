@@ -28,28 +28,81 @@ class_plus.minus <- merge(plus.minus, eRNA_plus, by.x = "plus", by.y = "V1") %>%
 ##### making the bi directional pairing distance graphs 
 
 minus_plus_bidir_class <- ggplot(class_minus.plus , aes(x=distance, fill=class_pairing)) + 
-  geom_histogram(bins = 100) + facet_wrap(~class_pairing, scales = "free_y") +
-  scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
-  theme(text = element_text(size = 20)) + 
+  geom_histogram(bins = 60) + facet_wrap(~class_pairing, scales = "free_y") +
+  scale_x_continuous(limits=c(-1000,1000), n.breaks = 10) + xlab("Distance to Nearest Peak") + 
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        text = element_text(size = 20),
+        panel.border = element_blank()) +
   ggtitle("Minus-Plus Orientation Peak Distance") 
 
 minus_plus_bidir_class
 
+ggsave("minus_plus_bidir_class.pdf",
+       plot=minus_plus_bidir_class, device="pdf")
 ggsave("minus_plus_bidir_class.png", plot= minus_plus_bidir_class)
 
 plus_minus_bidir_class <- ggplot(class_plus.minus , aes(x=distance, fill=class_pairing)) + 
   geom_histogram(bins = 60) + facet_wrap(~class_pairing, scales = "free_y") +
-  scale_x_continuous(limits=c(-1000,1000)) + xlab("Distance to Nearest Peak") + 
-  theme(text = element_text(size = 20)) + 
+  scale_x_continuous(limits=c(-1000,1000), 
+                     n.breaks = 10) + xlab("Distance to Nearest Peak") + 
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        text = element_text(size = 20),
+        panel.border = element_blank()) +
   ggtitle("Plus-Minus Orientation Peak Distance") 
 
 plus_minus_bidir_class
 
+ggsave("plus_minus_bidir_class.pdf",
+       plot=plus_minus_bidir_class, device="pdf")
 ggsave("plus_minus_bidir_class.png", plot= plus_minus_bidir_class)
 
 # Warning messages:
 # 1: Removed 14442 rows containing non-finite values (stat_bin). 
 # this happens when the x axis is limited and cuts off values 
+
+### combining both plus_minus and minus_plus class graphs 
+# first combine the data frame 
+temp_class_plus.minus <- class_plus.minus %>% select(plus, minus, distance, plus.class, minus.class)
+temp_class_minus.plus <- class_minus.plus %>% select(minus, plus, distance, minus.class, plus.class)
+
+class_combined_bidirectional <- full_join(temp_class_plus.minus, temp_class_minus.plus, 
+                                          by =c("plus", "minus", "distance", "minus.class", "plus.class")) %>% 
+  mutate( class = apply(., 1, function(x) {
+    minus.class = x["minus.class"]
+    plus.class = x["plus.class"]
+    if( (minus.class == "1" & plus.class == "3") ||  (minus.class == "3" & plus.class == "1") ) {
+      "3 and 1"
+    } else if ((minus.class == "1" & plus.class == "2") |  (minus.class == "2" & plus.class == "1")) {
+      "1 and 2"
+    } else if ((minus.class == "3" & plus.class == "2") |  (minus.class == "2" & plus.class == "3")) {
+      "2 and 3"
+    } else if (minus.class == plus.class) {
+      paste0(minus.class, " and ", plus.class)
+    } else {
+      "Failed"
+    }
+    
+  }))
+
+combined_bidir_class <- ggplot(class_combined_bidirectional, aes(x=distance, fill=class)) + 
+  geom_histogram(bins = 60) + facet_wrap(~class, scales = "free_y") +
+  scale_x_continuous(limits=c(-1000,1000), 
+                     n.breaks = 10) + xlab("Distance to Nearest Peak") + 
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank(), 
+        text = element_text(size = 20),
+        panel.border = element_blank()) +
+  ggtitle("Peak Distance") 
+
+combined_bidir_class
+
+ggsave("combined_bidir_class.pdf",
+       plot=combined_bidir_class, device="pdf")
 
 ##### selecting only class 1 - class 1 pairs 
 class1_plus.minus <- class_plus.minus[class_pairing == "1_1"] %>% mutate(strand1 = "+") %>% mutate(strand2 = "-")

@@ -8,7 +8,7 @@
 #args <- commandArgs(TRUE)
 
 #features <- read.table(args[1])
-features <- read.table("./input_files/characterization/eRNA.minus.characterize.xls")
+features <- read.table("./input_files/characterization/eRNA.plus.characterize.xls")
 
 df=subset(features, select=c(f06.TFBS, f07.P300, f08.CAGEbloodenhancer, f09.chromHMM_blood, f12.DNaseROADMAP, f15.HCNE))
 df$f06.TFBS=ifelse(df$f06.TFBS>=5,1,0)
@@ -16,7 +16,7 @@ df[df>0]=1;
 features$features=apply(df,1,sum)
 
 #strand=args[2]
-strand <- "minus"
+strand <- "plus"
 
 find_rbg <- function(x) {
   
@@ -64,9 +64,9 @@ find_rbg <- function(x) {
 }
 
 features$rbg <- apply(features,1,find_rbg)
-features$strand <- "-"
+features$strand <- "+"
 
-#write.table(features, paste0("eRNA.minus.characterize", ".xls"), sep="\t", quote = F, col.names = NA, row.names = T)
+write.table(features, paste0("eRNA.plus.characterize.feature.color", ".xls"), sep="\t", quote = F, col.names = NA, row.names = T)
 
 final_df <- subset(features, select=c(rbg))
 
