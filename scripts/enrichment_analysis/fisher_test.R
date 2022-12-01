@@ -11,11 +11,11 @@ library(ggplot2)
 
 args<-commandArgs(trailingOnly=TRUE)
 
-sample <- fread(args[1])
-control <- fread(args[2])
+#sample <- fread(args[1])
+#control <- fread(args[2])
 
-#sample <- fread("./data/minus/eRNA.minus.f08.CAGEenhtissue.counts")
-#control <- fread("./data/all_enhancer_tissues_hg38.counts")
+sample <- fread("./input_files/characterization/feature.enrichment/counts/merged/class1.eRNA.f16.GWASDisease.counts")
+control <- fread("./input_files/characterization/feature.enrichment/counts/GWAS_20220810.v1.02.counts.v2")
 
 total <- merge(sample, control, by="V1", all.x = TRUE, all.y = FALSE)
 
@@ -24,7 +24,9 @@ total <- total[, TNE := as.numeric(TNE)]
 total <- total[, Total := as.numeric(Total)]
 
 # TNE = AB
-total <- total[, nAB := Total - TNE]
+# a single SNP may be in 
+total <- total[, nAB := apply(total, 1, function(x)if (x[["TNE"]] > x[["Total"]]) {0} else {as.numeric(x[["Total"]]) - as.numeric(x[["TNE"]])})]
+#
 
 total <- total[, AnB := sum(total[["TNE"]]) - TNE ]
 total <- total[, nAnB := sum(total[["nAB"]]) - nAB ]
