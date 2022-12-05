@@ -56,12 +56,14 @@ N = 0.05 / length(unique(total$Trait))
 ### graphing only significant disease traits (p < 0.05)
 
 # took the TNE > 3 criteria from https://github.com/sterding/BRAINcode/blob/63322c7b192f79fe7819035182d64153a1e5c67d/src/eRNA.TFBSencode.enrichment.R
+# graph all TNEs with pvalue < 0.05
 signif <- subset(total, pval < 0.05 & TNE > 3) 
 signif <- signif[, pval := as.numeric(pval)]
 
 p <- ggplot(signif, aes(x=reorder(Trait, -pval), y=-log10(pval))) + 
   geom_bar(stat="identity") + 
   coord_flip() + geom_hline(yintercept=-log10(N), size=.5,linetype = 2)
+p
 
 ggsave(args[3], p, width = 20)
 ### all disease traits (grouped together) -> should I group together some categories?

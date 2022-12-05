@@ -11,11 +11,11 @@ library(ggplot2)
 
 args<-commandArgs(trailingOnly=TRUE)
 
-#sample <- fread(args[1])
-#control <- fread(args[2])
+sample <- fread(args[1])
+control <- fread(args[2])
 
-sample <- fread("./input_files/characterization/feature.enrichment/counts/merged/class1.eRNA.f16.GWASDisease.counts")
-control <- fread("./input_files/characterization/feature.enrichment/counts/GWAS_20220810.v1.02.counts.v2")
+#sample <- fread("./input_files/characterization/feature.enrichment/counts/merged/class1.eRNA.f16.GWASDisease.counts")
+#control <- fread("./input_files/characterization/feature.enrichment/counts/GWAS_20220810.v1.02.counts.v2")
 
 total <- merge(sample, control, by="V1", all.x = TRUE, all.y = FALSE)
 
@@ -25,8 +25,9 @@ total <- total[, Total := as.numeric(Total)]
 
 # TNE = AB
 # a single SNP may be in 
-total <- total[, nAB := apply(total, 1, function(x)if (x[["TNE"]] > x[["Total"]]) {0} else {as.numeric(x[["Total"]]) - as.numeric(x[["TNE"]])})]
-#
+# total <- total[, nAB := apply(total, 1, function(x)if (x[["TNE"]] > x[["Total"]]) {0} else {as.numeric(x[["Total"]]) - as.numeric(x[["TNE"]])})]
+
+total <- total[, nAB := Total - TNE]
 
 total <- total[, AnB := sum(total[["TNE"]]) - TNE ]
 total <- total[, nAnB := sum(total[["nAB"]]) - nAB ]
@@ -65,12 +66,32 @@ total <- cbind(total, do.call("rbind", apply(total, 1, function(x) {
 
 N = 0.05 / length(unique(total$Trait))
 
-signif <- subset(total, pval < N & TNE > 3)
-total <- total[, pval := as.numeric(pval)]
-p <- ggplot(total, aes(x=reorder(Trait, -pval), y=-log10(pval))) + 
-  geom_bar(stat="identity") + 
-  coord_flip() + 
+signif <- subset(total, pval < 0.05 & TNE > 3)
+
+if (nrow(signif) > 5) {
+  final <- signif[, pval := as.numeric(pval)]
+  
+  #final <- total[, pval := as.numeric(pval)]
+  #final <- final[order(pval)]
+  #final <- final[1452:1472,]
+} else {
+  final <- total[, pval := as.numeric(pval)]
+  final <- final[order(pval)]
+  
+  if(nrow(final) > 20) {
+    final <- final[1:20,]
+  }
+}
+
+final <- final[, OR := apply(final, 1, function(x) {if (is.infinite(x[["OR"]])) {NA} else {x[["OR"]]} })]
+
+p <- ggplot(final, aes(x=reorder(Trait, -pval), y=-log10(pval), size=TNE, colour=OR ) ) + 
+  geom_point(stat="identity") + scale_colour_gradient(na.value = "red") +
+  coord_flip()  + 
+  #labs(title = "class 1 GWAS") +
+  labs(title = args[4]) +
   geom_hline(yintercept=-log10(N), size=.5,linetype = 2) + xlab("Trait")
 p
 
-ggsave(args[3], p)
+# resize gtex graphs (more narrow )
+ggsave(args[3], plot = p, device = "pdf", width = 15, height = 50)
