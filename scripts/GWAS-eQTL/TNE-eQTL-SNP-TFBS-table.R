@@ -3,6 +3,7 @@
 # usage: Rscript TNE-eQTL-SNP-TFBS-table.R caviar.table dapg.table
 
 # eRNA.plus.f18.eSNP.gtexDapgDisease.intersect eRNA.minus.f18.eSNP.gtexDapgDisease.intersect eRNA.plus.f18.eSNP.gtexCaviarDisease.intersect eRNA.minus.f18.eSNP.gtexCaviarDisease.intersect eRNA.plus.f16.GWASDisease.intersect eRNA.minus.f16.GWASDisease.intersect 
+# module load R/4.0.2 
 
 args<-commandArgs(trailingOnly=TRUE)
 
@@ -34,16 +35,16 @@ library(dplyr)
 print("Reading in caviar data table")
 caviar <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexCaviar.bed")
 #caviar <- fread(args[1])
-caviar <- caviar[, c(1,7,8,14,16,19)]
-colnames(caviar) <- c("chr", "start", "end", "rsid", "caviar_gene", "tissue")
+caviar <- caviar[, c(1,7,8,14,16,17,19)] ### contains duplicates
+colnames(caviar) <- c("chr", "start", "end", "rsid", "caviar_gene", "caviar_ensg", "tissue")
 caviar$eQTL_pos <- paste(caviar$chr, caviar$start, caviar$end, sep="_")
 #caviar[,-c("chr", "start", "end")]
 caviar <- caviar[,-c(1:3)]
 
 print("Reading in dapg data table")
 dapg <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexDapg.bed")
-dapg <- dapg[, c(1,7,8,14,16,19)]
-colnames(dapg) <- c("chr", "start", "end", "rsid", "dapg_gene", "tissue")
+dapg <- dapg[, c(1,7,8,14,16,17,19)]
+colnames(dapg) <- c("chr", "start", "end", "rsid", "dapg_gene", "dapg_ensg","tissue")
 dapg$eQTL_pos <- paste(dapg$chr, dapg$start, dapg$end, sep="_")
 #dapg <- dapg[, -c("chr", "start", "end")]
 dapg <- dapg[,-c(1:3)]
@@ -56,16 +57,22 @@ print("merging Dapg")
 # this is the line adding more rows .. because one eQTL_pos/rsid/tissue can have multiple genes? 
 # note: all.x = TRUE and all.x = FALSE does not change the number of rows 
 TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
-  groupby(eQTL_pos, tissue, rsid, TNE, strand) %>% mutate(dapg_genes = paste0(dapg_gene, collapse=","))
-#nrow = 304,139
+  groupby(eQTL_pos, tissue, rsid, TNE, strand) %>% 
+  mutate(dapg_genes = paste0(dapg_gene, collapse=",")) %>% 
+  mutate(dapg_ensgs = paste0(dapg_ensg, collapse=",")) %>% 
+  distinct(across(contains("dapg_")), .keep_all = TRUE)
 
 TNE_Caviar <- read.table("eRNA.f18.eSNP.gtexCaviar.txt")
 colnames(TNE_Caviar) <- c("TNE", "strand", "rsid", "eQTL_pos", "tissue", "caviar")
 
 print("merging Caviar...")
 TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
-  groupby(eQTL_pos, tissue, rsid, TNE, strand) %>% mutate(caviar_genes = paste0(caviar_gene, collapse=","))
-# nrows = 33834
+  group_by(eQTL_pos, tissue, rsid, TNE, strand) %>% 
+  mutate(caviar_genes = paste0(caviar_gene, collapse=",")) %>% 
+  mutate(caviar_ensgs = paste0(caviar_ensg, collapse=",")) %>% 
+  distinct(across(contains("caviar_")), .keep_all = TRUE)
+# distinct removes the duplicate rows with same caviar_genes values 
+# nrow of TNE_Caviar now matches the eRNA.f18.eSNP.gtexCaviar table 
 
 # groupby the eQTL_pos, tissue, rsid -> multiple genes into a list 
 
@@ -76,8 +83,6 @@ all_eQTL[is.na(all_eQTL)] <- "NA"
 
 print("writing table")
 fwrite(all_eQTL, "eRNA.eQTL.snps.xls", sep="\t", quote = F, col.names = T, row.names = F)
-
-### TODO produces duplicated rows 
 
 ## combining the GWAS information 
 system(paste0("awk 'OFS=\"\t\"; FS=\"\t\" {print $4, \"+\", $8, $5\"_\"$6\"_\"$7, $9}' eRNA.plus.f16.GWASDisease.intersect > GWAS_plus.txt"))
