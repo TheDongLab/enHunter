@@ -1,6 +1,7 @@
 # creating merge table for ALL eQTL and GWAS snp information 
 
 # usage: Rscript TNE-eQTL-SNP-TFBS-table.R caviar.table dapg.table
+
 # eRNA.plus.f18.eSNP.gtexDapgDisease.intersect eRNA.minus.f18.eSNP.gtexDapgDisease.intersect eRNA.plus.f18.eSNP.gtexCaviarDisease.intersect eRNA.minus.f18.eSNP.gtexCaviarDisease.intersect eRNA.plus.f16.GWASDisease.intersect eRNA.minus.f16.GWASDisease.intersect 
 
 args<-commandArgs(trailingOnly=TRUE)
@@ -21,6 +22,8 @@ system(paste0("awk 'OFS=\"\t\" {print $4, \"-\", $8, $5\"_\"$6\"_\"$7, $9, \"Yes
 
 system(paste0("cat eRNA.f18.plus.eSNP.gtexCaviar.txt eRNA.f18.minus.eSNP.gtexCaviar.txt > eRNA.f18.eSNP.gtexCaviar.txt") )
 
+library(data.table)
+library(dplyr)
 # read in the Caviar and Dapg table 
 # V19: tissue 
 # V1: chromosome 
@@ -28,33 +31,53 @@ system(paste0("cat eRNA.f18.plus.eSNP.gtexCaviar.txt eRNA.f18.minus.eSNP.gtexCav
 # V8: eQTL end 
 # V14: rsid 
 # V16: gene name 
-caviar <- read.table(args[1])
+print("Reading in caviar data table")
+caviar <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexCaviar.bed")
+#caviar <- fread(args[1])
 caviar <- caviar[, c(1,7,8,14,16,19)]
-colnames(caviar) <- c("chr", "start", "end", "rsid", "gene", "tissue")
+colnames(caviar) <- c("chr", "start", "end", "rsid", "caviar_gene", "tissue")
 caviar$eQTL_pos <- paste(caviar$chr, caviar$start, caviar$end, sep="_")
 #caviar[,-c("chr", "start", "end")]
-caviar[,-c(1:3)]
+caviar <- caviar[,-c(1:3)]
 
-dapg <- read.table(args[2])
+print("Reading in dapg data table")
+dapg <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexDapg.bed")
 dapg <- dapg[, c(1,7,8,14,16,19)]
-colnames(dapg) <- c("chr", "start", "end", "rsid", "gene", "tissue")
+colnames(dapg) <- c("chr", "start", "end", "rsid", "dapg_gene", "tissue")
 dapg$eQTL_pos <- paste(dapg$chr, dapg$start, dapg$end, sep="_")
 #dapg <- dapg[, -c("chr", "start", "end")]
-dapg <- dapg[, -c(1:3)]
+dapg <- dapg[,-c(1:3)]
 
-TNE_Dapg <- read.table("eRNA.f18.eSNP.gtexDapg.txt")
+print("Reading in TNEs")
+TNE_Dapg <- fread("eRNA.f18.eSNP.gtexDapg.txt")
 colnames(TNE_Dapg) <- c("TNE", "strand", "rsid", "eQTL_pos", "tissue", "dapg")
 
-TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE)
+print("merging Dapg")
+# this is the line adding more rows .. because one eQTL_pos/rsid/tissue can have multiple genes? 
+# note: all.x = TRUE and all.x = FALSE does not change the number of rows 
+TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
+  groupby(eQTL_pos, tissue, rsid, TNE, strand) %>% mutate(dapg_genes = paste0(dapg_gene, collapse=","))
+#nrow = 304,139
 
 TNE_Caviar <- read.table("eRNA.f18.eSNP.gtexCaviar.txt")
 colnames(TNE_Caviar) <- c("TNE", "strand", "rsid", "eQTL_pos", "tissue", "caviar")
 
-TNE_Dapg <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE)
+print("merging Caviar...")
+TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
+  groupby(eQTL_pos, tissue, rsid, TNE, strand) %>% mutate(caviar_genes = paste0(caviar_gene, collapse=","))
+# nrows = 33834
 
+# groupby the eQTL_pos, tissue, rsid -> multiple genes into a list 
+
+# 33834 + 304,139 = 337973
 all_eQTL <- merge(TNE_Dapg, TNE_Caviar, by=c("TNE", "strand", "rsid" ,"eQTL_pos", "tissue"), all=TRUE)
+# i believe the only NAs should only be from the the caviar and dapg column 
+all_eQTL[is.na(all_eQTL)] <- "NA"
 
-write.table(all_eQTL, "eRNA.eQTL.snps", sep="\t", quote = F, col.names = T, row.names = F)
+print("writing table")
+fwrite(all_eQTL, "eRNA.eQTL.snps.xls", sep="\t", quote = F, col.names = T, row.names = F)
+
+### TODO produces duplicated rows 
 
 ## combining the GWAS information 
 system(paste0("awk 'OFS=\"\t\"; FS=\"\t\" {print $4, \"+\", $8, $5\"_\"$6\"_\"$7, $9}' eRNA.plus.f16.GWASDisease.intersect > GWAS_plus.txt"))
@@ -106,24 +129,61 @@ eQTL_GWAS_TFBS <- merge(TFBS_TNEs, eQTL_GWAS, by="eQTL_pos", all.y=T)
 
 fwrite(eQTL_GWAS_TFBS, "eQTL_GWAS_TFBS.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
-### add TNE class information to table 
+### add TNE class and host_gene information to table 
 library(data.table)
 library(dplyr)
 eQTL_GWAS_TFBS <- fread("eQTL_GWAS_TFBS.xls")
-eRNA_class <- fread("./input_files/characterization/eRNA.characterize.feature.color.xls")  %>% select(V1, class, strand)
-colnames(eRNA_class) <- c("TNE", "class", "strand")
+eRNA_class <- fread("./input_files/characterization/eRNA.characterize.feature.color.xls")  %>% select(V1, class, strand, f19.Hostgene)
+colnames(eRNA_class) <- c("TNE", "class", "strand", "hostgene")
 eRNA_class_eQTL_GWAS_TFBS <- merge(eQTL_GWAS_TFBS, eRNA_class, by=c("TNE", "strand"), all.x=TRUE)
 
-write.table(eRNA_class_eQTL_GWAS_TFBS, "eRNA.class.eQTL.snps.GWAS.TFBS.xls", sep="\t", quote = F, col.names = T, row.names = F)
+write.table(eRNA_class_eQTL_GWAS_TFBS, "eRNA.class.hostgene.eQTL.snps.GWAS.TFBS.xls", sep="\t", quote = F, col.names = T, row.names = F)
+
+### add DE TNE information 
+
+
+### add PCHi-C data 
+
+# TODO remake Hi-C so that it includes + and - strands 
+HiC <- fread("./input_files/characterization/feature.enrichment/eRNA.minus.f22.TNE.PCHiCPromoters")[, 4:9]
+colnames(HiC) <- c("TNE", "oeChr", "oeStart", "oeEnd", "oeID", "Promoter")
+
+test <- merge(GWAS_eQTLs, HiC, by="TNE")
+
 
 ### add DE gene information 
 library(data.table)
 gencode_genes <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/gencode.genes.no_version.txt")
 colnames(gencode_genes) <- c("ENSG", "Gene")
 
+## TODO read in DE genes 
+DE_genes <- fread("DE_genes.noversion.txt", header = FALSE)
+
 eRNA_class_eQTL_GWAS_TFBS <- fread("eRNA.class.eQTL.snps.GWAS.TFBS.xls")
 
-merge(eRNA_class_eQTL_GWAS_TFBS, gencode_genes)
+new_df <- eRNA_class_eQTL_GWAS_TFBS_PCHiC %>% 
+  mutate(all_genes = paste0(dapg_genes, caviar_genes, PCHiC_genes, collapse = ",")) 
+# make temp column of all the genes (dapg, caviar and HiC) in ENSG format
+
+new_df$ensg <- lapply(new_df$all_genes, function(x) {
+  gene_list <- split(x, ",")
+  
+  #convert all genes to ENSG ID
+  ensg_genes <- gencode_genes[gencode_genes$Gene %in% gene_list]["ENSG"]
+  
+  # find DE genes for each ENSG ID 
+  final_list <- DE_genes[DE_genes$V1 %in% ensg_genes]
+  return(final_list)
+})
 
 
 
+
+### 
+
+
+eRNA_dapg_gene <- merge(eRNA_class_eQTL_GWAS_TFBS, gencode_genes, by.x = "dapg_gene", by.y = "Gene", all.x = TRUE)
+names(eRNA_dapg_gene)[names(eRNA_dapg_gene) == 'ENSG'] <- 'dapg_ENSG'
+
+eRNA_caviar_gene <- merge(eRNA_dapg_gene, gencode_genes, by.x = "caviar_gene", by.y = "Gene", all.x = TRUE)
+names(eRNA_caviar_gene)[names(eRNA_caviar_gene) == 'ENSG'] <- 'caviar_ENSG'
