@@ -54,7 +54,8 @@ TNE_Dapg <- fread("eRNA.f18.eSNP.gtexDapg.txt")
 colnames(TNE_Dapg) <- c("TNE", "strand", "rsid", "eQTL_pos", "tissue", "dapg")
 
 print("merging Dapg")
-# this is the line adding more rows .. because one eQTL_pos/rsid/tissue can have multiple genes? 
+# this is the line adding more rows .. because one eQTL_pos/rsid/tissue can have multiple genes
+# also, dapg and caviar dataframes contain some duplicate rows ... 
 # note: all.x = TRUE and all.x = FALSE does not change the number of rows 
 TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
   groupby(eQTL_pos, tissue, rsid, TNE, strand) %>% 
@@ -70,9 +71,11 @@ TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all
   group_by(eQTL_pos, tissue, rsid, TNE, strand) %>% 
   mutate(caviar_genes = paste0(caviar_gene, collapse=",")) %>% 
   mutate(caviar_ensgs = paste0(caviar_ensg, collapse=",")) %>% 
-  distinct(across(contains("caviar_")), .keep_all = TRUE)
-# distinct removes the duplicate rows with same caviar_genes values 
+  distinct(across(contains("caviar_genes")), .keep_all = TRUE)
+# distinct removes the duplicate rows with same caviar_genes values (caviar_genes and caviar_ensg should be same length)
 # nrow of TNE_Caviar now matches the eRNA.f18.eSNP.gtexCaviar table 
+
+TNE_Caviar <- TNE_Caviar[, -c("caviar_gene", "caviar_ensg")]
 
 # groupby the eQTL_pos, tissue, rsid -> multiple genes into a list 
 
