@@ -3,30 +3,30 @@
 #
 #Features	            Data type	    Description
 #========             =========     ==================================
-#dis2TSS	            integer	      distance between the middle points of HiTNE and the nearest TSS, in bp. If HiTNE is located intronic, it's plus; otherwise it's minus. 
+#dis2TSS	            integer	      distance between the middle points of TNE and the nearest TSS, in bp. If TNE is located intronic, it's plus; otherwise it's minus. 
 #RPKM	                float	        normalized expression level, calculated in the same way as RPKM.
 #RPM	                float	        reads density at the summit position, normalized to total mapped reads in million. 
-#readsCount	          integer	      raw reads count mapped to the HiTNE
+#readsCount	          integer	      raw reads count mapped to the TNE
 #normCpG	            float	        normalized CpG score 
-#nTFBS	              integer	      number of distinct TFs bound to the HiTNE, based on ENCODE ChIPseq cluster (wgEncodeRegTfbsClusteredV3)
-#P300	                boolean	      if the P300 binding site found in the HiTNE
+#nTFBS	              integer	      number of distinct TFs bound to the TNE, based on ENCODE ChIPseq cluster (wgEncodeRegTfbsClusteredV3)
+#P300	                boolean	      if the P300 binding site found in the TNE
 #enhancer_CAGE	      boolean	      if overlap with any CAGE-defined permissive enhancers
-#enhancer_histone	    boolean	      if overlap with any histone marks-defined enhancers (chromHMM states of E6|E7|E12 from substantial nigro)
+#enhancer_histone	    boolean	      if overlap with any histone marks-defined enhancers (chromHMM states of E6|E7|E12 from blood)
 #enhancer_VISTA	      boolean	      if overlap with any tested enhancers (positive enhancers from VISTA enhancer database)
 #bDNase	              boolean	      if overlap with DNase cluster from ENCODE (wgEncodeRegDnaseClustered V2)
 #DNaseROADMAP         boolean       if overlap with DNase narrow peak from Roadmap brain samples 
-#conservation	        float	        mean phastCons score for the HiTNE region
+#conservation	        float	        mean phastCons score for the TNE region
 #bHCNE	              boolean	      if overlapping with any HCNEs (HCNE_hg38_danRer7_70pc_50col from Ancora)
 
 #bidirectional_trans  str,int,int   closest peak on opposite strand, distance away, and directionality score  
 
-#GWAS	                integer	      number of GWAS SNPs in HiTNE
-#bGWAS	              boolean	      if any GWAS SNPs in HiTNE
-#eSNP	                integer	      number of eQTL SNPs in HiTNE
-#beSNP	              boolean	      if any eQTL SNPs in HiTNE
+#GWAS	                integer	      number of GWAS SNPs in TNE
+#bGWAS	              boolean	      if any GWAS SNPs in TNE
+#eSNP	                integer	      number of eQTL SNPs in TNE
+#beSNP	              boolean	      if any eQTL SNPs in TNE
 
-#nHostgene	          integer	      number of HiTNEs in the host gene. 0 for intergenic HiTNE
-#lenHostgene	        integer	      length of host gene. 0 for intergenic HiTNE
+#nHostgene	          integer	      number of TNEs in the host gene. 0 for intergenic TNE
+#lenHostgene	        integer	      length of host gene. 0 for intergenic TNE
 
 #HiC                  integer       number of PIR (promoter interacting regions) in TNE 
 #bHiC                 boolean       if any PIR 

@@ -156,6 +156,7 @@ new_test <- merge(eQTL_GWAS_TFBS, DE_TNE, by = c("TNE", "strand"), all.x = TRUE)
 write.table(new_test, "eRNA_class_eQTL_GWAS_TFBS_DETNE.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
 ### add TNE class and host_gene information to table 
+#### THIS IS RUN LOCALLY.
 library(data.table)
 library(dplyr)
 eQTL_GWAS_TFBS <- fread("eRNA_class_eQTL_GWAS_TFBS_DETNE.xls")
@@ -235,6 +236,6 @@ new_df$DE_genes <- lapply(new_df$DE_ensgs,function(x)  {
   gencode_genes[gencode_genes$ENSG %in% DE_all]$Gene 
 })
 
-fwrite(new_df, "FINAL.xls", sep="\t", quote = F, col.names = T, row.names = F)
+fwrite(new_df, "snp_table.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
 

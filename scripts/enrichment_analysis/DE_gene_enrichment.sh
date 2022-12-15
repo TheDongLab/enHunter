@@ -1,36 +1,7 @@
-
-
-pipeline_path=/data/bioinformatics/projects/donglab/AMPPD_eRNA
-source $pipeline_path/config.txt
-
-STRAND=$1
-
-EXTERNAL_FEATURE=/data/bioinformatics/external_data/externalData
-inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
-
-# need a new bedtools version to run 
-module load bedtools/2.20.1 
-
-# reports all features from inputbed even if the feature doesn't overlap with any genes
-intersectBed -a $inputbed -b $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed -wao
-
-cut -f1 DEresult.padj05.xls | sed '1d' > DEeRNAs.txt
-
-cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/output 
-mkdir merged/DE_analysis 
-cat <(awk 'OFS="\t" {print $1"_plus", $2}' plus/eRNA.plus.f19.Hostgene.txt) <(awk 'OFS="\t" {print $1"_minus", $2}' minus/eRNA.minus.f19.Hostgene.txt) > merged/DE_analysis/eRNA.f19.Hostgene.txt
-
-grep -F -f /data/bioinformatics/projects/donglab/AMPPD_eRNA/DE_eRNA/PPMI/All/DEeRNAs.txt merged/DE_analysis/eRNA.f19.Hostgene.txt > DEeRNAs.f19.Hostgene.txt 
-# note: 
-# KI270718.1_2810_3380_minus and KI270718.1_290_830_minus from DEeRNAs.txt are not included in DEeRNAs.f19.Hostgene.txt
-
-grep -v -F -f /data/bioinformatics/projects/donglab/AMPPD_eRNA/DE_eRNA/PPMI/All/DEeRNAs.txt merged/DE_analysis/eRNA.f19.Hostgene.txt > nonDEeRNAs.f19.Hostgene.txt 
-
-module load bedtools/2.20.1 
-sort -k2,2 DEeRNAs.f19.Hostgene.txt | bedtools groupby -g 2 -c 1 -o count > DEeRNAs.f19.Hostgene.counts
-sort -k2,2 nonDEeRNAs.f19.Hostgene.txt | bedtools groupby -g 2 -c 1 -o count > nonDEeRNAs.f19.Hostgene.counts
-
-# REDOING IT :D
+# =============================
+# generating inpput file information needed for DE_gene_enrichment.R 
+# this was run on erisone 
+# =============================
 ########### 
 pipeline_path=/data/bioinformatics/projects/donglab/AMPPD_eRNA
 source $pipeline_path/config.txt
@@ -104,3 +75,37 @@ awk '$7 == 0' nonDE_gene_DE_eRNA.bed | wc -l >> enrichment.txt
 ### checking LITAF 
 
 bedtools intersect -a /data/bioinformatics/projects/donglab/AMPPD_eRNA/DE_genes/PPMI/DEgenes_noversion.bed  -b sorted_DEeRNAs.bed -wb | grep HGNC:16841___ENSG00000189067.14___LITAF 
+
+
+###### OLD 
+## generating input files for finding the DE eRNA enrichment of ALL genes individually 
+# pipeline_path=/data/bioinformatics/projects/donglab/AMPPD_eRNA
+# source $pipeline_path/config.txt
+# 
+# STRAND=$1
+# 
+# EXTERNAL_FEATURE=/data/bioinformatics/external_data/externalData
+# inputbed=$pipeline_path/inputs/$STRAND/eRNA.bed
+# 
+# # need a new bedtools version to run 
+# module load bedtools/2.20.1 
+# 
+# # reports all features from inputbed even if the feature doesn't overlap with any genes
+# intersectBed -a $inputbed -b $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed -wao
+# 
+# cut -f1 DEresult.padj05.xls | sed '1d' > DEeRNAs.txt
+# 
+# cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/output 
+# mkdir merged/DE_analysis 
+# cat <(awk 'OFS="\t" {print $1"_plus", $2}' plus/eRNA.plus.f19.Hostgene.txt) <(awk 'OFS="\t" {print $1"_minus", $2}' minus/eRNA.minus.f19.Hostgene.txt) > merged/DE_analysis/eRNA.f19.Hostgene.txt
+# 
+# grep -F -f /data/bioinformatics/projects/donglab/AMPPD_eRNA/DE_eRNA/PPMI/All/DEeRNAs.txt merged/DE_analysis/eRNA.f19.Hostgene.txt > DEeRNAs.f19.Hostgene.txt 
+# # note: 
+# # KI270718.1_2810_3380_minus and KI270718.1_290_830_minus from DEeRNAs.txt are not included in DEeRNAs.f19.Hostgene.txt
+# 
+# grep -v -F -f /data/bioinformatics/projects/donglab/AMPPD_eRNA/DE_eRNA/PPMI/All/DEeRNAs.txt merged/DE_analysis/eRNA.f19.Hostgene.txt > nonDEeRNAs.f19.Hostgene.txt 
+# 
+# module load bedtools/2.20.1 
+# sort -k2,2 DEeRNAs.f19.Hostgene.txt | bedtools groupby -g 2 -c 1 -o count > DEeRNAs.f19.Hostgene.counts
+# sort -k2,2 nonDEeRNAs.f19.Hostgene.txt | bedtools groupby -g 2 -c 1 -o count > nonDEeRNAs.f19.Hostgene.counts
+#  
