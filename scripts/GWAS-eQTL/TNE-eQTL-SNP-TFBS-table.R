@@ -201,6 +201,7 @@ fwrite(PCHiC_table, "eRNA_class_eQTL_GWAS_TFBS_PCHiC_v2.xls", sep="\t", quote = 
 ### add DE gene information 
 # this will be tricky 
 library(data.table)
+#/data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/gencode.genes.no_version.txt
 gencode_genes <- fread("gencode.genes.no_version.txt", header= F)
 colnames(gencode_genes) <- c("ENSG", "Gene")
 
