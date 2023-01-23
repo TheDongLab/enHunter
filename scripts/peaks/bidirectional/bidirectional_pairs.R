@@ -8,57 +8,58 @@
 ##### 1. both TNEs are in minus to plus orientation (negative distance)
 
 # plus.minus.bed 
-system("mkdir scripts/peaks/attempt-3/pairs")
-system("awk '$21<0 {print $0}' input_files/closest/plus.minus.bed > scripts/peaks/attempt-3/pairs/plus.minus.step1.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/plus.minus.step1.bed")
+#system("mkdir scripts/peaks/attempt-3/pairs")
+system("awk '$21<0 {print $0}' input_files/closest/plus.minus.bed > scripts/peaks/bidirectional/pairs/plus.minus.step1.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/plus.minus.step1.bed")
 # there are 37613 pairs in minus to plus orientation for plus.minus.bed 
 
 # minus.plus.bed
-system("awk '$21<0 {print $0}' input_files/closest/minus.plus.bed > scripts/peaks/attempt-3/pairs/minus.plus.step1.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/minus.plus.step1.bed")
+system("awk '$21<0 {print $0}' input_files/closest/minus.plus.bed > scripts/peaks/bidirectional/pairs/minus.plus.step1.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/minus.plus.step1.bed")
 # there are 24078 pairs in minus to plus orientation for minus.plus.bed 
 
 ##### 2. summit distance is < 500 bp 
 
 # plus.minus.bed 
-system("awk '$21>-500 {print $0}' scripts/peaks/attempt-3/pairs/plus.minus.step1.bed > scripts/peaks/attempt-3/pairs/plus.minus.step2.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/plus.minus.step2.bed")
+system("awk '$21>-500 {print $0}' scripts/peaks/bidirectional/pairs/plus.minus.step1.bed > scripts/peaks/bidirectional/pairs/plus.minus.step2.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/plus.minus.step2.bed")
 # there are 341 pairs < 500 bp apart for plus.minus orientation 
 
 # minus.plus.bed 
-system("awk '$21>-500 {print $0}' scripts/peaks/attempt-3/pairs/minus.plus.step1.bed > scripts/peaks/attempt-3/pairs/minus.plus.step2.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/minus.plus.step2.bed")
+system("awk '$21>-500 {print $0}' scripts/peaks/bidirectional/pairs/minus.plus.step1.bed > scripts/peaks/bidirectional/pairs/minus.plus.step2.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/minus.plus.step2.bed")
 # there are 339 pairs < 500 bp apart for minus.plus.bed 
 
-system("awk '$21>-700 {print $0}' scripts/peaks/attempt-3/pairs/minus.plus.step1.bed > scripts/peaks/attempt-3/pairs/minus.plus.step2-700bp.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/minus.plus.step2-700bp.bed")
+# changing the criteria to 500 bp away instead .. 
+system("awk '$21>-700 {print $0}' scripts/peaks/bidirectional/pairs/minus.plus.step1.bed > scripts/peaks/bidirectional/pairs/minus.plus.step2-700bp.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/minus.plus.step2-700bp.bed")
 
-system("awk '$21>-700 {print $0}' scripts/peaks/attempt-3/pairs/plus.minus.step1.bed > scripts/peaks/attempt-3/pairs/plus.minus.step2-700bp.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/plus.minus.step2-700bp.bed")
+system("awk '$21>-700 {print $0}' scripts/peaks/bidirectional/pairs/plus.minus.step1.bed > scripts/peaks/bidirectional/pairs/plus.minus.step2-700bp.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/plus.minus.step2-700bp.bed")
 
 
 ## merge minus.plus.step2.bed and plus.minus.step2.bed, checking for duplicate pairs 
 ## reorganize minus.plus.step2.bed into plus minus TNE listing 
-system("paste <(cut -f11-20 scripts/peaks/attempt-3/pairs/minus.plus.step2.bed) <(cut -f1-10 scripts/peaks/attempt-3/pairs/minus.plus.step2.bed) <(cut -f21 scripts/peaks/attempt-3/pairs/minus.plus.step2.bed) > scripts/peaks/attempt-3/pairs/plus.minus.step2.tmp")
-system("cat scripts/peaks/attempt-3/pairs/plus.minus.step2.tmp scripts/peaks/attempt-3/pairs/plus.minus.step2.bed | sort | uniq > scripts/peaks/attempt-3/pairs/merged.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/merged.bed")
+system("paste <(cut -f11-20 scripts/peaks/bidirectional/pairs/minus.plus.step2.bed) <(cut -f1-10 scripts/peaks/bidirectional/pairs/minus.plus.step2.bed) <(cut -f21 scripts/peaks/bidirectional/pairs/minus.plus.step2.bed) > scripts/peaks/bidirectional/pairs/plus.minus.step2.tmp")
+system("cat scripts/peaks/bidirectional/pairs/plus.minus.step2.tmp scripts/peaks/bidirectional/pairs/plus.minus.step2.bed | sort | uniq > scripts/peaks/bidirectional/pairs/merged.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/merged.bed")
 # there are 372 pairs in merged.bed 
 
-system("cut -f4,6,14,16,21 scripts/peaks/attempt-3/pairs/merged.bed > scripts/peaks/attempt-3/pairs/bidirectional_pairs.txt")
+system("cut -f4,6,14,16,21 scripts/peaks/bidirectional/pairs/merged.bed > scripts/peaks/bidirectional/pairs/bidirectional_pairs.txt")
 
 ## 700 bp 
-system("paste <(cut -f11-20 scripts/peaks/attempt-3/pairs/minus.plus.step2-700bp.bed) <(cut -f1-10 scripts/peaks/attempt-3/pairs/minus.plus.step2-700bp.bed) <(cut -f21 scripts/peaks/attempt-3/pairs/minus.plus.step2-700bp.bed) > scripts/peaks/attempt-3/pairs/plus.minus.step2-700.tmp")
-system("cat scripts/peaks/attempt-3/pairs/plus.minus.step2-700.tmp scripts/peaks/attempt-3/pairs/plus.minus.step2-700bp.bed | sort | uniq > scripts/peaks/attempt-3/pairs/merged-700.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/merged-700.bed")
+system("paste <(cut -f11-20 scripts/peaks/bidirectional/pairs/minus.plus.step2-700bp.bed) <(cut -f1-10 scripts/peaks/bidirectional/pairs/minus.plus.step2-700bp.bed) <(cut -f21 scripts/peaks/bidirectional/pairs/minus.plus.step2-700bp.bed) > scripts/peaks/bidirectional/pairs/plus.minus.step2-700.tmp")
+system("cat scripts/peaks/bidirectional/pairs/plus.minus.step2-700.tmp scripts/peaks/bidirectional/pairs/plus.minus.step2-700bp.bed | sort | uniq > scripts/peaks/bidirectional/pairs/merged-700.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/merged-700.bed")
 
-system("cut -f4,6,14,16,21 scripts/peaks/attempt-3/pairs/merged-700.bed > scripts/peaks/attempt-3/pairs/bidirectional_pairs_700.txt")
+system("cut -f4,6,14,16,21 scripts/peaks/bidirectional/pairs/merged-700.bed > scripts/peaks/bidirectional/pairs/bidirectional_pairs_700.txt")
 
 ## no distance filter 
-system("paste <(cut -f11-20 input_files/closest/minus.plus.bed) <(cut -f1-10 input_files/closest/minus.plus.bed) <(cut -f21 input_files/closest/minus.plus.bed) > scripts/peaks/attempt-3/pairs/plus.minus.all.tmp")
-system("cat scripts/peaks/attempt-3/pairs/plus.minus.all.tmp input_files/closest/plus.minus.bed | sort | uniq > scripts/peaks/attempt-3/pairs/merged_all.bed")
-system("wc -l scripts/peaks/attempt-3/pairs/merged_all.bed")
+system("paste <(cut -f11-20 input_files/closest/minus.plus.bed) <(cut -f1-10 input_files/closest/minus.plus.bed) <(cut -f21 input_files/closest/minus.plus.bed) > scripts/peaks/bidirectional/pairs/plus.minus.all.tmp")
+system("cat scripts/peaks/bidirectional/pairs/plus.minus.all.tmp input_files/closest/plus.minus.bed | sort | uniq > scripts/peaks/bidirectional/pairs/merged_all.bed")
+system("wc -l scripts/peaks/bidirectional/pairs/merged_all.bed")
 
-system("cut -f4,6,14,16,21 scripts/peaks/attempt-3/pairs/merged_all.bed > scripts/peaks/attempt-3/pairs/bidirectional_pairs_all.txt")
+system("cut -f4,6,14,16,21 scripts/peaks/bidirectional/pairs/merged_all.bed > scripts/peaks/bidirectional/pairs/bidirectional_pairs_all.txt")
 
 ##### 3. class 1 or class 2 TNEs
 library(data.table)
