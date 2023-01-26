@@ -1,4 +1,10 @@
-# script to massage snp_table.xls file into desired output 
+# script to massage snp_table.xls file into desired output seen below
+#########################################
+# 1. TNE 
+# 2. eRNA.padj DE value of TNE
+# 3. target_gene 
+# 4. target_gene_padj 
+# 5. source of target gene 
 
 library(data.table)
 library(dplyr)

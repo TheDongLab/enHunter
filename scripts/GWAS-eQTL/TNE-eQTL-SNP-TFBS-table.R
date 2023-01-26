@@ -34,7 +34,6 @@ library(dplyr)
 # V16: gene name 
 print("Reading in caviar data table")
 caviar <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexCaviar.bed")
-#caviar <- fread(args[1])
 caviar <- caviar[, c(1,7,8,14,16,17,19)] ### contains duplicates
 colnames(caviar) <- c("chr", "start", "end", "rsid", "caviar_gene", "caviar_ensg", "tissue")
 caviar$eQTL_pos <- paste(caviar$chr, caviar$start, caviar$end, sep="_")
