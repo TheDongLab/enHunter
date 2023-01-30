@@ -28,7 +28,7 @@ links$IDtarget <- match(links$target, nodes$name)-1
 # Make the Network
 p <- sankeyNetwork(Links = links, Nodes = nodes,
                    Source = "IDsource", Target = "IDtarget",
-                   Value = "value", NodeID = "name", 
+                   Value = "value", NodeID = "name", fontSize = 20,
                    sinksRight=FALSE)
 p
 

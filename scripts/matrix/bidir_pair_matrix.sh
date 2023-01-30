@@ -65,3 +65,14 @@ do
   grep $TNE1 eRNA.minus.readCounts.xls 
 done 
 
+## checking why the number of rows for 
+## bidirectional_pairs_all.txt and eRNA.bidirectiona_pairs.readCounts.xls
+## is different 
+awk 'OFS="\t" {print $1"_plus_"$3"_minus"}' bidirectional_pairs_all.txt
+
+grep -v <(awk '{print $1"_plus_"$3"_minus"}' bidirectional_pairs/bidirectional_pairs_all.txt) eRNA.bidirectional_pairs.readCounts.xls | wc -l 
+
+head eRNA.bidirectional_pairs.readCounts.xls | cut -f 1 | sort 
+
+sed '1d' eRNA.bidirectional_pairs.readCounts.xls | cut -f 1 | sort 
+

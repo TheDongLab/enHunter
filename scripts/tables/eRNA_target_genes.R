@@ -49,11 +49,23 @@ TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all
 
 TNE_Caviar <- TNE_Caviar[, -c(7,8)]
 TNE_Caviar$source <- "caviar"
+TNE_Caviar <- TNE_Caviar %>% ungroup() %>% select(-c(eQTL_pos, rsid, caviar)) %>% rename(gene = caviar_genes, ensgs = caviar_ensgs)
 
 ### merge with hostgene information table 
-TNEs <- merge(TNE_Caviar, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
-TNEs <- TNEs %>% select(-eQTL_pos, -rsid, -caviar) %>% rename(gene = caviar_genes, ensgs = caviar_ensgs)
+## TODO I think this line is adding extra empty lines 
+# TNEs <- merge(TNE_Caviar, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
 
+#TNEs <- TNEs %>% select(-eQTL_pos, -rsid, -caviar) %>% rename(gene = caviar_genes, ensgs = caviar_ensgs)
+
+###### TNEs ######
+# 1. TNE 
+# 2. strand 
+# 3. tissue 
+# 4. cpp 
+# 5. gene 
+# 6. ensgs 
+# 7. source 
+# 8. Hostgene 
 
 print("Reading in dapg data table")
 dapg <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexDapg.bed")
@@ -76,11 +88,17 @@ TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TR
   mutate(dapg_ensgs = paste0(dapg_ensg, collapse=",")) %>% 
   distinct(across(contains("dapg_genes")), .keep_all = TRUE)
 
-TNE_Dapg <- TNE_Dapg[, -c(7,8)] %>% select(-eQTL_pos, -rsid, -dapg) %>% rename(gene = dapg_genes, ensgs = dapg_ensgs)
+TNE_Dapg <- TNE_Dapg %>% ungroup() %>% select(-c(dapg_gene, dapg_ensg, eQTL_pos, rsid, dapg) ) %>% 
+  rename(gene = dapg_genes, ensgs = dapg_ensgs, cpp = pip)
 TNE_Dapg$source <- "dapg"
 
 ### merge with hostgene information table 
-TNEs <- rbind(TNE_Dapg, TNEs, by=c("TNE", "strand"))
+TNE_eQTLs <- rbind(TNE_Dapg, TNE_Caviar)
+
+## TODO make sure to only merge with host gene at the END of getting all the individual target gene TNEs 
+testing <- merge(TNE_eQTLs, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
+# 83331 TNEs missing 
+# 299266 + 83331 = 382597
 
 print("writing table")
 fwrite(TNEs, "TNEs.test.xls", sep="\t", quote = F, col.names = T, row.names = F)
