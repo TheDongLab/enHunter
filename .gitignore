@@ -16,3 +16,4 @@
 *.narrowPeak
 *.tsv
 input_files/*
+scripts/peaks/bidirectional/pairs/*
