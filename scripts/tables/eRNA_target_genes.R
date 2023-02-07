@@ -109,5 +109,30 @@ fwrite(TNEs, "TNEs.test.xls", sep="\t", quote = F, col.names = T, row.names = F)
 # all_eQTL[is.na(all_eQTL)] <- "NA"
 # 
 # print("writing table")
+testing <- fread("TNEs.test.xls")
+
+minus_PCHiC <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/minus/eRNA.PCHiC/eRNA.minus.f22.PCHiCPromoters.bait.score.txt")
+colnames(minus_PCHiC) <- c("TNE", "strand", "tissue", "cpp", "gene")
+minus_PCHiC$source <- "PCHiC"
+minus_PCHiC$ensgs <- ""
+
+plus_PCHiC <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/plus/eRNA.PCHiC/eRNA.plus.f22.PCHiCPromoters.bait.score.txt")
+colnames(plus_PCHiC) <- c("TNE", "strand", "tissue", "cpp", "gene")
+plus_PCHiC$source <- "PCHiC"
+plus_PCHiC$ensgs <- ""
+
+PCHiC <- rbind(minus_PCHiC, plus_PCHiC)
+
+# keep all the PCHiC rows (bait and oe interactions)
+PCHiC_hostgene <- merge(TNE_hostgene, PCHiC, by=c("TNE", "strand"), all.y = T)
+
+fwrite(PCHiC_hostgene, "TNE.PCHiC.xls", sep="\t", quote = F, col.names = T, row.names = F)
+
+final <- rbind(PCHiC_hostgene, testing)
+fwrite(final, "TNE.target.gene.xls", sep="\t", quote = F, col.names = T, row.names = F)
+
+
+
+
 
 
