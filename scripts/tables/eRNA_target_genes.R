@@ -108,6 +108,10 @@ TNEs <- testing %>% group_by(TNE, strand, ensgs, tissue, source) %>% summarise(i
 print("writing table")
 fwrite(TNEs, "TNEs.test.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
+
+####################################################################################################################################################
+
+
 testing <- fread("TNEs.test.xls")
 
 minus_PCHiC <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/minus/eRNA.PCHiC/eRNA.minus.f22.PCHiCPromoters.bait.score.txt")
