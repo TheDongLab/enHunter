@@ -25,11 +25,16 @@ colnames(TNE_hostgene) <- c("TNE", "strand", "Hostgene")
 # V19: tissue 
 print("Reading in caviar data table")
 caviar <- fread("/data/bioinformatics/external_data/externalData/GTEx_p_value/GTEx_hg38_UCSC_track/gtexCaviar.bed")
-caviar <- caviar[, c(1,7,8,14,16,17,19,20)] ### contains duplicates
+caviar <- caviar[, c(1,7,8,14,16,17,19,20)] 
 colnames(caviar) <- c("chr", "start", "end", "rsid", "caviar_gene", "caviar_ensg", "tissue", "cpp")
 caviar$eQTL_pos <- paste(caviar$chr, caviar$start, caviar$end, sep="_")
-#caviar[,-c("chr", "start", "end")]
 caviar <- caviar[,-c(1:3)]
+
+# does NOT contain duplicates -> maybe this is because I added cpp score?
+any(duplicated(caviar)) # FALSE
+
+# it IS because you added cpp score 
+# gene/tissue/rsid pairs can appear duplicated because the gene version is actually different 
 
 #"eRNA.f18.eSNP.gtexCaviar.txt": contains all the SNPs located within TNEs 
 TNE_Caviar <- read.table("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/snp_table/eRNA.f18.eSNP.gtexCaviar.txt")
@@ -38,24 +43,26 @@ colnames(TNE_Caviar) <- c("TNE", "strand", "rsid", "eQTL_pos", "tissue", "caviar
 print("merging Caviar...")
 
 # merge caviar table (with gene and cpp information) with TNE caviar SNP information
-TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
-  group_by(eQTL_pos, tissue, rsid, TNE, strand) %>% 
-  mutate(caviar_genes = paste0(caviar_gene, collapse=",")) %>% 
-  mutate(caviar_ensgs = paste0(caviar_ensg, collapse=",")) %>% 
-  distinct(across(contains("caviar_genes")), .keep_all = TRUE)
+TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) 
 
-# distinct removes the duplicate rows with same caviar_genes values 
-# nrow of TNE_Caviar now matches the eRNA.f18.eSNP.gtexCaviar table 
+# can not group by rsid/tissue/TNE here because then it messes up the cpp/pip score 
+# cpp/pip score is different for each rsid/gene pair  
 
-TNE_Caviar <- TNE_Caviar[, -c(7,8)]
+#  group_by(eQTL_pos, tissue, rsid, TNE, strand) %>% 
+#  mutate(caviar_genes = paste0(caviar_gene, collapse=",")) %>% 
+#  mutate(caviar_ensgs = paste0(caviar_ensg, collapse=",")) %>% 
+#  distinct(across(contains("caviar_genes")), .keep_all = TRUE)
+
+# tester <- TNE_Caviar %>% group_by(TNE, strand, rsid, eQTL_pos, tissue, caviar_gene, caviar_ensg) %>% mutate(importance = max(cpp))
+
+# the "duplicate rows" only occur if you groupby gene instead of ensgs 
+# there are multiple ensgs for each gene name 
+#filter(tester, cpp != importance) %>% nrow() # 0 
+
+tester <- TNE_Caviar %>% group_by(TNE, strand, rsid, eQTL_pos, tissue, caviar_gene, caviar_ensg) %>% mutate(importance = max(cpp))
+
 TNE_Caviar$source <- "caviar"
-TNE_Caviar <- TNE_Caviar %>% ungroup() %>% select(-c(eQTL_pos, rsid, caviar)) %>% rename(gene = caviar_genes, ensgs = caviar_ensgs)
-
-### merge with hostgene information table 
-## TODO I think this line is adding extra empty lines 
-# TNEs <- merge(TNE_Caviar, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
-
-#TNEs <- TNEs %>% select(-eQTL_pos, -rsid, -caviar) %>% rename(gene = caviar_genes, ensgs = caviar_ensgs)
+TNE_Caviar <- TNE_Caviar %>% select(-c(eQTL_pos, rsid, caviar)) %>% rename(gene = caviar_gene, ensgs = caviar_ensg)
 
 ###### TNEs ######
 # 1. TNE 
@@ -79,36 +86,28 @@ TNE_Dapg <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/snp_t
 colnames(TNE_Dapg) <- c("TNE", "strand", "rsid", "eQTL_pos", "tissue", "dapg")
 
 print("merging Dapg")
-# this is the line adding more rows .. because one eQTL_pos/rsid/tissue can have multiple genes
-# also, dapg and caviar dataframes contain some duplicate rows ... 
-# note: all.x = TRUE and all.x = FALSE does not change the number of rows 
-TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE) %>% 
-  group_by(eQTL_pos, tissue, rsid, TNE, strand) %>% 
-  mutate(dapg_genes = paste0(dapg_gene, collapse=",")) %>% 
-  mutate(dapg_ensgs = paste0(dapg_ensg, collapse=",")) %>% 
-  distinct(across(contains("dapg_genes")), .keep_all = TRUE)
 
-TNE_Dapg <- TNE_Dapg %>% ungroup() %>% select(-c(dapg_gene, dapg_ensg, eQTL_pos, rsid, dapg) ) %>% 
-  rename(gene = dapg_genes, ensgs = dapg_ensgs, cpp = pip)
+# note: all.x = TRUE and all.x = FALSE does not change the number of rows 
+TNE_Dapg <- merge(TNE_Dapg, dapg, by=c("eQTL_pos", "tissue", "rsid"), all.x = TRUE)
+
+TNE_Dapg <- TNE_Dapg %>% select(-c(eQTL_pos, rsid, dapg)) %>% 
+  rename(gene = dapg_gene, ensgs = dapg_ensg, cpp = pip)
 TNE_Dapg$source <- "dapg"
 
 ### merge with hostgene information table 
 TNE_eQTLs <- rbind(TNE_Dapg, TNE_Caviar)
 
-## TODO make sure to only merge with host gene at the END of getting all the individual target gene TNEs 
 testing <- merge(TNE_eQTLs, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
-# 83331 TNEs missing 
+# 83331 TNEs missing -> do not have target gene information from eQTL snps 
 # 299266 + 83331 = 382597
+
+# group by TNE/gene/tissue
+# if multiple snps associated with the same gene in one TNE/tissue, then add the cpp scores together 
+TNEs <- testing %>% group_by(TNE, strand, ensgs, tissue, source) %>% summarise(importance = sum(cpp)) %>% distinct()
 
 print("writing table")
 fwrite(TNEs, "TNEs.test.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
-
-# groupby the eQTL_pos, tissue, rsid -> multiple genes into a list 
-# i believe the only NAs should only be from the the caviar and dapg column 
-# all_eQTL[is.na(all_eQTL)] <- "NA"
-# 
-# print("writing table")
 testing <- fread("TNEs.test.xls")
 
 minus_PCHiC <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/minus/eRNA.PCHiC/eRNA.minus.f22.PCHiCPromoters.bait.score.txt")
@@ -122,6 +121,9 @@ plus_PCHiC$source <- "PCHiC"
 plus_PCHiC$ensgs <- ""
 
 PCHiC <- rbind(minus_PCHiC, plus_PCHiC)
+
+# if gene = NA (baitName) then drop the row 
+PCHiC[!is.na(PCHiC$gene), ]
 
 # keep all the PCHiC rows (bait and oe interactions)
 PCHiC_hostgene <- merge(TNE_hostgene, PCHiC, by=c("TNE", "strand"), all.y = T)
