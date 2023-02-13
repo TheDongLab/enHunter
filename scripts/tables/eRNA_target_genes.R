@@ -140,8 +140,14 @@ final_merged <- merge(final, TNE_hostgene, by=c("TNE", "strand"), all.y = T )
 
 fwrite(final_merged, "TNE.target.gene.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
-library(xlsx)
-write.xlsx(final_merged, file= "TNE.target.gene.xls", sheetName = "all", sep="\t", quote = F, col.names = T, row.names = F)
+## creating a file with different sheets for each data source
+library(openxlsx)
+
+dapg_hostgene <- merge(TNE_Dapg, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
+caviar_hostgene <- merge(TNE_Caviar, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
+
+list_of_datasets <- list("all" = final_merged, "PCHiC" = PCHiC_hostgene, "dapg" = dapg_hostgene, "caviar" = caviar_hostgene)
+write.xlsx(list_of_datasets, file= "target.genes.xls", quote = F, col.names = T, row.names = F)
 
 
 
