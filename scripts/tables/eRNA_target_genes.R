@@ -11,9 +11,9 @@ library(data.table)
 library(dplyr)
 
 TNE_hostgene <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA.characterize.feature.color.xls") %>% 
-  select(V1, strand, f19.Hostgene)
+  select(V1, strand, f19.Hostgene, "class")
 
-colnames(TNE_hostgene) <- c("TNE", "strand", "Hostgene")
+colnames(TNE_hostgene) <- c("TNE", "strand", "Hostgene", "class")
 
 #### adding eQTL dapg and caviar information ####
 # read in the Caviar and Dapg table 
@@ -59,7 +59,7 @@ TNE_Caviar <- merge(TNE_Caviar , caviar, by=c("eQTL_pos", "tissue", "rsid"), all
 # there are multiple ensgs for each gene name 
 #filter(tester, cpp != importance) %>% nrow() # 0 
 
-tester <- TNE_Caviar %>% group_by(TNE, strand, rsid, eQTL_pos, tissue, caviar_gene, caviar_ensg) %>% mutate(importance = max(cpp))
+#tester <- TNE_Caviar %>% group_by(TNE, strand, rsid, eQTL_pos, tissue, caviar_gene, caviar_ensg) %>% mutate(importance = max(cpp))
 
 TNE_Caviar$source <- "caviar"
 TNE_Caviar <- TNE_Caviar %>% select(-c(eQTL_pos, rsid, caviar)) %>% rename(gene = caviar_gene, ensgs = caviar_ensg)
@@ -97,45 +97,51 @@ TNE_Dapg$source <- "dapg"
 ### merge with hostgene information table 
 TNE_eQTLs <- rbind(TNE_Dapg, TNE_Caviar)
 
-testing <- merge(TNE_eQTLs, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
+# testing <- merge(TNE_eQTLs, TNE_hostgene, by=c("TNE", "strand"), all.y = T)
 # 83331 TNEs missing -> do not have target gene information from eQTL snps 
 # 299266 + 83331 = 382597
 
 # group by TNE/gene/tissue
 # if multiple snps associated with the same gene in one TNE/tissue, then add the cpp scores together 
-TNEs <- testing %>% group_by(TNE, strand, ensgs, tissue, source) %>% summarise(importance = sum(cpp)) %>% distinct()
+grouped_TNEs <- TNE_eQTLs %>% group_by(TNE, strand, ensgs, gene, tissue, source) 
+TNEs <- grouped_TNEs %>% summarise(importance = sum(cpp)) %>% distinct()
 
 print("writing table")
 fwrite(TNEs, "TNEs.test.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
-
 ####################################################################################################################################################
-
 
 testing <- fread("TNEs.test.xls")
 
 minus_PCHiC <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/minus/eRNA.PCHiC/eRNA.minus.f22.PCHiCPromoters.bait.score.txt")
-colnames(minus_PCHiC) <- c("TNE", "strand", "tissue", "cpp", "gene")
+colnames(minus_PCHiC) <- c("TNE", "strand", "tissue", "importance", "gene")
 minus_PCHiC$source <- "PCHiC"
 minus_PCHiC$ensgs <- ""
 
 plus_PCHiC <- fread("/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/plus/eRNA.PCHiC/eRNA.plus.f22.PCHiCPromoters.bait.score.txt")
-colnames(plus_PCHiC) <- c("TNE", "strand", "tissue", "cpp", "gene")
+colnames(plus_PCHiC) <- c("TNE", "strand", "tissue", "importance", "gene")
 plus_PCHiC$source <- "PCHiC"
 plus_PCHiC$ensgs <- ""
 
 PCHiC <- rbind(minus_PCHiC, plus_PCHiC)
 
 # if gene = NA (baitName) then drop the row 
-PCHiC[!is.na(PCHiC$gene), ]
+PCHiC <- PCHiC[!is.na(PCHiC$gene), ]
 
 # keep all the PCHiC rows (bait and oe interactions)
+# TODO the merge is producing extra rows 
 PCHiC_hostgene <- merge(TNE_hostgene, PCHiC, by=c("TNE", "strand"), all.y = T)
 
 fwrite(PCHiC_hostgene, "TNE.PCHiC.xls", sep="\t", quote = F, col.names = T, row.names = F)
 
-final <- rbind(PCHiC_hostgene, testing)
-fwrite(final, "TNE.target.gene.xls", sep="\t", quote = F, col.names = T, row.names = F)
+# final merge with characterization table to avoid duplicates! 
+final <- rbind(PCHiC, TNEs)
+final_merged <- merge(final, TNE_hostgene, by=c("TNE", "strand"), all.y = T )
+
+fwrite(final_merged, "TNE.target.gene.xls", sep="\t", quote = F, col.names = T, row.names = F)
+
+library(xlsx)
+write.xlsx(final_merged, file= "TNE.target.gene.xls", sheetName = "all", sep="\t", quote = F, col.names = T, row.names = F)
 
 
 
