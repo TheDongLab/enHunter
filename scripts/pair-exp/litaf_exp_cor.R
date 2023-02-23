@@ -4,8 +4,9 @@ library(GGally)
 
 make_vector <- function(file, name) {
   vector <- scan(file = file, sep = "\t", nlines = 1, na.strings = name) %>% log(base=10) 
-  
-  return(vector[!is.na(vector) & is.finite(vector)])
+  vector[is.infinite(vector)] <- NA
+  #return(vector[!is.na(vector) & is.finite(vector)])
+  return(vector)
 }
 
 LITAF <- make_vector("./input_files/LITAF/LITAF_gene_exp.tsv", "ENSG00000189067.12")[1:8258]
