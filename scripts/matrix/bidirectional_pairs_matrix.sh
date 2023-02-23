@@ -20,9 +20,10 @@ do
 done 
 
 ### running less number of pairs 
-head -n 1 eRNA.bidirectional_pairs_all.readCounts.xls > eRNA.bidirectional_pairs.readCounts.xls
+head -n 1 eRNA.bidirectional_pairs_all.readCounts.xls > head.xls
+#eRNA.bidirectional_pairs.readCounts.xls
 
-cat bidirectional_pairs_700.txt| sed 's/+/plus/g; s/-/minus/g' | 
+head -n 2 bidirectional_pairs_700.txt| sed 's/+/plus/g; s/-/minus/g' | 
 while IFS=$'\t' read TNE1 TNE1_strand TNE2 TNE2_strand dist 
 do 
   TNE1+="_"$TNE1_strand # plus strand
@@ -31,19 +32,27 @@ do
   
   #bsub -q vshort -n 1 -J $combined bash merge_bidir_TNEs.sh $TNE1 $TNE2 $combined
   TNE2_vals=$(grep -F $TNE2 /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA.merged.readCounts.v2.xls)
+  # TNE2_vals=$(grep -F chr1_101015450_101016080_plus /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA.merged.readCounts.v2.xls)
   IFS=$'\t' read -r -a array_minus <<< "$TNE2_vals"
+  
   TNE1_vals=$(grep -F $TNE1 /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA.merged.readCounts.v2.xls)
+  # TNE1_vals=$(grep -F chr1_101015290_101015560_minus /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA.merged.readCounts.v2.xls)
   IFS=$'\t' read -r -a array_plus <<< "$TNE1_vals"
+  
   # gets the length of array 
   # TNE1_vals and TNE2_vals should be of equal length! 
   # aka array_minus and array_plus
   len=${#array_plus[@]}
-  echo "${#array_plus[@]}"
+  
+  # first value array_plus[0] should be the TNE name 
+  echo "${array_plus[0]}"
+  c=()  
   for ((i=1; i <$len; i++));do c+=(`expr ${array_plus[$i]} + ${array_minus[$i]}`);done
   (
     IFS=$'\t'
     echo -e "$combined\t${c[*]}"
-  ) >> eRNA.bidirectional_pairs.readCounts.xls
+  ) >> head.xls
+  #eRNA.bidirectional_pairs.readCounts.xls
 
 done 
 
@@ -63,3 +72,6 @@ done
 
 ### the above code works as expected ... it probably has to do with submitting to the cluster multiple times... 
 ### going to try without submitting to cluster 
+
+
+awk -F'\t' '{print NF;}' eRNA.bidirectional_pairs.readCounts.xls
