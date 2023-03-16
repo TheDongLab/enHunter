@@ -85,7 +85,7 @@ for (df in split_by_transcript) {
   TPM <- df[-c(1)]
   
   colnames(TPM) <- c("sample", transcript)
-  TPM[["sample"]] <- str_replace_all(TPM[["sample"]], "-", ".")
+  #TPM[["sample"]] <- str_replace_all(TPM[["sample"]], "-", ".")
   
   full_df <- Reduce(merge, list(eRNA1, eRNA2, eRNA3, TPM))
   

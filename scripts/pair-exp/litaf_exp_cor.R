@@ -135,4 +135,32 @@ clec16a <- data.frame(clec16a = uni_len(ENSG00000038532.15, max_ln_clec16a), eRN
 
 ggpairs(clec16a)
 
+###### testing a new method ... #######
+
+read_vector <- function(file, name) {
+  vector <- scan(file = file, sep = "\t", nlines = 1, na.strings = name)
+}
+
+# eRNA 1
+eRNA_1 <- (read_vector("./input_files/LITAF/chr16_11611980_11612400.txt", "chr16_11611980_11612400") + 
+             read_vector("./input_files/LITAF/chr16_11612780_11613560.txt", "chr16_11612780_11613560")) %>% log(base=10) 
+
+# eRNA2 
+eRNA_2 <- (read_vector("./input_files/LITAF/chr16_11613950_11614560.txt", "chr16_11613950_11614560") + 
+             read_vector("./input_files/LITAF/chr16_11613470_11613780.txt", "chr16_11613470_11613780")) %>% log(base=10) 
+
+# eRNA3  
+eRNA_3 <- (read_vector("./input_files/LITAF/chr16_11639850_11640300.txt", "chr16_11639850_11640300") + 
+             read_vector("./input_files/LITAF/chr16_11640470_11641120.txt", "chr16_11640470_11641120")) %>% log(base=10)
+
+LITAF <- read_vector("./input_files/LITAF/LITAF_gene_exp.tsv", "ENSG00000189067.12")[1:length(eRNA_1)]
+
+df <- data.frame(eRNA1 = eRNA_1, 
+                 eRNA2 = eRNA_2, 
+                 eRNA3 = eRNA_3,
+                 LITAF = LITAF)
+
+
+
+
 
