@@ -1,0 +1,31 @@
+---
+title: "Project Files"
+output: html_document
+---
+
+### Important Files 
+##### 1. input_files/characterization/eRNA.characterize.feature.color.xls 
+characterization table for all TNEs (plus AND minus strand). Characterizes TNEs into class 1,2,3 and contains annotation data (PCHiC, eQTL, VISTA, etc ...)
+##### scripts 
+A. eRNA.characterization/amppd/amppd.eRNA.characterization.sh
+B. scripts/file_conversions/colorBedByFeatures.R 
+
+##### 2. scripts/peaks/bidirectional/pairs/900bp/bidirectional_pairs.txt
+bidirectional TNE pairs in minus plus direction less than 900 bp apart. 
+##### scripts 
+A. scripts/peaks/bidirectional
+
+##### 3. /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/bidirectional_pairs/eRNA.bidirectional_pairs.class1_2_TNE_900.xls
+raw read count matrix for bidirectional TNE pairs which are class 1 or class 2 less than 900 bp apart. 
+##### scripts 
+A. /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/bidirectional_pairs/top_900_bidirectional_pairs_matrix.sh
+
+##### 4. /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/minus/eRNA.minus.readCounts.xls AND /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/plus/eRNA.plus.readCounts.xls
+raw read count matrix for TNEs on minus and plus strand 
+##### scripts 
+A. scripts/matrix/RPMtoReadCount.sh 
+
+##### 5. 
+TNE and target gene correlation data 
+##### scripts 
+A. scripts/pair-exp
