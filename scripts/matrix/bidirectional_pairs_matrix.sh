@@ -4,6 +4,7 @@
 ### found in bidirectional_pairs_all (no distance filter)
 
 # bsub -q normal -J bidirmatrix -o %J.out -e %J.err -R 'rusage [mem=8000]' ./bidirectional_pairs_matrix.sh
+# bsub -q short -J bidirmatrix_900 -o %J.out -e %J.err ./top_900_bidirectional_pairs_matrix.sh
 
 cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs
 
