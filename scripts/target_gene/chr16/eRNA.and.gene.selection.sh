@@ -10,6 +10,9 @@ cat <(head -n 1 gene_expr_matrix_tpm_row_genes.txt) <(grep ENSG00000189067 gene_
 cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs
 cat <(head -n 1 gene_expr_matrix_tpm_row_genes.txt) <(grep ENSG00000038532 gene_expr_matrix_tpm_row_genes.txt) > CLEC16A_gene_exp_table.txt
 
+
+# stored in the /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA_exp directory
+
 # chr16_11611980_11612400 (eRNA 1 minus)
 cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/minus
 cat <(head -n 1 eRNA.meanRPM.xls) <(grep chr16_11611980_11612400 eRNA.meanRPM.xls) > chr16_11611980_11612400_exp_table.txt
@@ -33,9 +36,6 @@ cat <(head -n 1 eRNA.meanRPM.xls) <(grep chr16_11639850_11640300 eRNA.meanRPM.xl
 # chr16_11640470_11641120 (eRNA 3 plus)
 cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/plus
 cat <(head -n 1 eRNA.meanRPM.xls) <(grep chr16_11640470_11641120 eRNA.meanRPM.xls) > chr16_11640470_11641120_exp_table.txt
-
-
-
 
 
 # keeps track of the genes tested with the eRNAs  

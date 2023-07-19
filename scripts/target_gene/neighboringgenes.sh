@@ -31,8 +31,6 @@ awk -v dist=$dist 'OFS="\t" {print $1, $2 - dist, $3 + dist, $4 }' $inputbed | i
 cat <(head -n 1 $matrix) <(grep -f neighboring_genes.tmp $matrix) > $output.txt
 
 
-
-
 # while read gene; do
 #   row=<(echo "$gene"| cut -f1 -d".")
 #   cat <(cut -f 1 $matrix) <(grep $row $matrix) 

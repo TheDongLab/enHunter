@@ -113,7 +113,10 @@ correlation <- cor.test(df[["eRNA"]], df[["ENSG00000189067.12"]],  method = "pea
 correlation$estimate 
 correlation$p.value
 
+###########################################################################
 ### reading in the TPM values of ALL the neighboring genes in one table ###
+###########################################################################
+
 original <- fread("input_files/LITAF_locus_expr.txt", header = FALSE)
 
 transposed <- t(original)
