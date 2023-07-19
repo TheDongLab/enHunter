@@ -25,7 +25,7 @@ raw read count matrix for TNEs on minus and plus strand
 ##### scripts 
 A. scripts/matrix/RPMtoReadCount.sh 
 
-##### 5. 
-TNE and target gene correlation data 
+##### 5. LITAF/ AND LITAF_neighboring_gene_signif.csv
+TNE and target gene correlation data (specifically for LITAF)
 ##### scripts 
 A. scripts/pair-exp
