@@ -13,40 +13,39 @@ library(stringr)
 
 # reads in the data table and converts it to the right format 
 make_table <- function(file) {
-  table <- read.table(file, header = TRUE, row.names = NULL) %>% data.table::melt(id = 1, variable.name = "sample" )
-  name <- table[1,1]
-  table <- table[-c(1)]
+  table <- fread(file = file) %>% melt(id = 1, variable.name = "sample" )
+  name <- table[1,1][[1]]
+  table <- table[, -c(1)]
   colnames(table) <- c("sample", name)
-  table[name] <- log10(table[name])
   
   return(table)
 }
 
 # eRNA 1 minus
-chr16_11611980_11612400 <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/chr16_11611980_11612400_exp_table.txt")
+chr16_11611980_11612400 <- make_table("./input_files/eRNAs/tables/chr16_11611980_11612400_exp_table.txt")
 
 # eRNA 1 plus
-chr16_11612780_11613560 <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/chr16_11612780_11613560_exp_table.txt")
+### gets a warning because 0 is an integer and not double
+chr16_11612780_11613560 <- make_table("./input_files/eRNAs/tables/chr16_11612780_11613560_exp_table.txt")
 
 # eRNA 2 minus
-chr16_11613470_11613780 <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/chr16_11613470_11613780_exp_table.txt") 
+chr16_11613470_11613780 <- make_table("./input_files/eRNAs/tables/chr16_11613470_11613780_exp_table.txt") 
 
 # eRNA 2 plus
-chr16_11613950_11614560 <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/chr16_11613950_11614560_exp_table.txt") 
+chr16_11613950_11614560 <- make_table("./input_files/eRNAs/tables/chr16_11613950_11614560_exp_table.txt") 
 
 # eRNA 3 minus 
-chr16_11639850_11640300 <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/chr16_11639850_11640300_exp_table.txt") 
+chr16_11639850_11640300 <- make_table("./input_files/eRNAs/tables/chr16_11639850_11640300_exp_table.txt") 
 
 # eRNA 3 plus 
-chr16_11640470_11641120 <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/chr16_11640470_11641120_exp_table.txt") 
+chr16_11640470_11641120 <- make_table("./input_files/eRNAs/tables/chr16_11640470_11641120_exp_table.txt") 
 
 # gene 
-LITAF <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/LITAF_gene_exp_table.txt") 
-CLEC16A <- make_table("/Users/rw552/Documents/amp-pd/enHunter/input_files/eRNAs/tables/CLEC16A_gene_exp_table.txt") 
+LITAF <-  make_table("./input_files/eRNAs/tables/LITAF_gene_exp_table.txt") 
 
 df <- Reduce(merge,list(chr16_11611980_11612400,chr16_11612780_11613560,chr16_11613470_11613780,
                   chr16_11613950_11614560,chr16_11639850_11640300,chr16_11640470_11641120, 
-                  LITAF, CLEC16A))
+                  LITAF))
 
 df <- df[-c(1)]
 df <- df[is.finite(rowSums(df)),]
@@ -97,6 +96,6 @@ for (df in split_by_transcript) {
   
 }
 
-ENST00000571627.5
+#ENST00000571627.5
 
 

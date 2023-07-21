@@ -18,6 +18,8 @@
 
 #### puts ALL cell type interactions into one file 
 #### colored based on the cell type with the highest score 
+#### NOT in hg38 (in hg19 as it was originally)
+
 awk 'OFS="\t" {
   if(NR==1){
     split($0, array); 
@@ -63,9 +65,9 @@ awk 'OFS="\t" {
     
     print "chr"$1, start, end, "chr"$1"/"start"/"end"/"t, 0, m, t, color, "chr"$1, $2, $3, $4, ".", "chr"$6, $7, $8, $9, "."
   }
-}' PCHiC_peak_matrix_cutoff5.txt > test.interact
+}' PCHiC_peak_matrix_cutoff5.txt > all.interactions.cell.hg19.interact 
 
-#### seperating PCHiC interactions based on cell type 
+ 
 
 
 
