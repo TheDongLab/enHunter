@@ -24,7 +24,7 @@ cut -f8,9  ./merged/class3.eRNA.f16.GWASDisease.intersect | sort -k 2,2 | uniq |
 
 scp rw552@erisone.partners.org:/data/bioinformatics/projects/donglab/AMPPD_eRNA/output/merged/eRNA.enrichment/class'*'.eRNA.f16.GWASDisease.counts .
 
-#wd=/Users/rosanwang/Documents/college/dong_lab/code/enHunter/input_files/characterization/feature.enrichment/counts
+#wd=/Users/rosanwang/Documents/donglab/projects/eRNA/enHunter/input_files/characterization/feature.enrichment/counts
 wd=/Users/rw552/Documents/amp-pd/enHunter/input_files/characterization/feature.enrichment/counts
 Rscript fisher_test.R $wd/merged/class1.eRNA.f16.GWASDisease.counts $wd/GWAS_20220810.v1.02.counts.v2 GWAS_class1.pdf "GWAS class 1"
 Rscript fisher_test.R $wd/merged/class2.eRNA.f16.GWASDisease.counts $wd/GWAS_20220810.v1.02.counts.v2 GWAS_class2.pdf "GWAS class 2"

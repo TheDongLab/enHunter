@@ -1,6 +1,8 @@
 #============================================================
 # Script to download bigwig files for various marks
 # Usage: bash $pipeline_path/src/get.regulatoryMarks.data.sh
+
+# modified from: https://github.com/sterding/BRAINcode/blob/master/src/get.regulatoryMarks.data.sh 
 #============================================================
 
 ANNOTATION=$GENOME/Annotation/Genes
@@ -24,7 +26,7 @@ curl -s http://fantom.gsc.riken.jp/5/datahub/hg38/reads/ctssTotalCounts.rev.bw >
 curl -s https://slidebase.binf.ku.dk/human_enhancers/presets/serve/blood > blood_differentially_expressed_enh_hg19.bed
 awk '{OFS="\t"; print $1, $2, $3, $4, 0, $6, $7, $8, $9, $10, $11, $12}' blood_differentially_expressed_enh_hg19.bed | liftOver stdin hg19ToHg38.over.chain.gz blood_differentially_expressed_enh_hg38.bed unMappedHumanBlood 
 
-##### for expressed enhancers in all facets
+##### for expressed enhancers in all facets (tissues)
 mkdir expressed_enh
 cd expressed_enh
 curl -s https://slidebase.binf.ku.dk/human_enhancers/presets/serve/facet_expressed_enhancers.tgz | gunzip -c | tar xvf -
@@ -45,7 +47,7 @@ sort -k1,1 -k2,2n all_enhancer_tissues_hg38.bed  > all_enhancer_tissues_hg38_sor
 # for counts file
 sort -k 6 all_enhancer_tissues_hg38.bed | bedtools groupby -g 6 -c 6 -o count > all_enhancer_tissues_hg38.counts
 
-##### for differentially expressed enhancers in all facets 
+##### for differentially expressed enhancers in all facets (tissues)
 mkdir diff_expressed_enh
 cd diff_expressed_enh
 curl -s https://slidebase.binf.ku.dk/human_enhancers/presets/serve/facet_differentially_expressed_0.05.tgz | gunzip -c | tar xvf -
@@ -91,11 +93,8 @@ echo "getting Conservation"
 cd $externalData/Conservation
 
 # # phyloP
-# # http://hgdownload.cse.ucsc.edu/goldenpath/hg19/phyloP46way/
-# rsync -avz --progress rsync://hgdownload.cse.ucsc.edu/goldenPath/hg19/phyloP46way/vertebrate ./
-# zcat vertebrate/chr*.gz | gzip -c > vertebrate/phyloP46way.wigFix.gz
-# rm vertebrate/chr*.gz
-# wigToBigWig vertebrate/phyloP46way.wigFix.gz $GENOME/Sequence/WholeGenomeFasta/hg19.chrom.size Conservation.phyloP46way.bigwig
+# # RW: http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/hg38.phyloP100way.bw 
+rsync -avz --progress http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/hg38.phyloP100way.bw  ./
 
 echo "getting DNase"
 # ---------------------------------
