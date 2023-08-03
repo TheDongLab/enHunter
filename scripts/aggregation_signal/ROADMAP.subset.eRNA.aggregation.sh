@@ -32,17 +32,21 @@
 #E046 - Primary Natural Killer cells from peripheral blood
 
 ## SELECTED ##
-#E062 - Primary mononuclear cells from peripheral blood (PBMC)
-#E034 - Primary T cells from peripheral blood
-#E029 - Primary monocytes from peripheral blood
-#E032 - Primary B cells from peripheral blood
-#E046 - Primary Natural Killer cells from peripheral blood
+#E062 - Primary mononuclear cells from peripheral blood (PBMC) <- No DNase file 
+#E034 - Primary T cells from peripheral blood (1.1 G)
+#E029 - Primary monocytes from peripheral blood (821 M)
+#E032 - Primary B cells from peripheral blood (1.2 G)
+#E046 - Primary Natural Killer cells from peripheral blood (1.1 G)
+cd /data/bioinformatics/external_data/externalData/DNase/ROADMAP
 
-# TODO remake the mac2signal list with the selected samples
-grep DNase macs2signal.list | cut -f2 | awk '{print "http://egg2.wustl.edu/roadmap/data/byFileType/signal/consolidated/macs2signal/pval/"$1}' | xargs -n 1 -P 8 wget -b
+grep DNase macs2signal.list | cut -f2 | grep -E 'E062|E034|E029|E032|E046' | awk '{print "http://egg2.wustl.edu/roadmap/data/byFileType/signal/consolidated/macs2signal/pval/"$1}' | xargs --max-args 1 --max-procs 3 wget -b
 mkdir download; mv E* download/
 
-bsub -q big -n 1 -M 10000 bigWigMerge download/E*DNase.pval.signal.bigwig merged.DNase.pval.signal.bg
+conda activate /PHShome/rw552/condaenvs/ucsc 
+#### make sure that ssl in version 1.0.0 
+#### conda install -c anaconda openssl=1.0
+
+bsub -q normal -n 1 -M 4000 -o DNaseMerge.output bigWigMerge download/E*DNase.pval.signal.bigwig merged.DNase.pval.signal.bg 
 
 #############  2. liftover bw files from hg19 to hg38
 # bw -> bedGraph -> liftover -> bw
@@ -52,12 +56,20 @@ bsub -q big -n 1 -M 10000 bigWigMerge download/E*DNase.pval.signal.bigwig merged
 # LC_COLLATE=C sort -k1,1 -k2,2n input_hg38.bedgraph > input_hg38.sorted.bedgraph
 # bedGraphToBigWig input_hg38.sorted.bedgraph hg38.chrom.sizes output.bw
 
+module load liftover/1.0 
 # liftover from hg19 to hg38
-liftOver merged.DNase.pval.signal.bg hg19ToHg38.over.chain merged.DNase.pval.signal.hg38.bedgraph unMapped
-LC_COLLATE=C sort -k1,1 -k2,2n merged.DNase.pval.signal.hg38.bedgraph > merged.DNase.pval.signal.sorted.hg38.bedgraph
+bsub -q normal -o liftOver.output -n 1 -M 2000 liftOver merged.DNase.pval.signal.bg hg19ToHg38.over.chain.gz merged.DNase.pval.signal.hg38.bedgraph unMappedDNaseMerged
 
-#############  3. merge bw files 
-bsub -q big -n 1 -M 10000 bedGraphToBigWig merged.DNase.pval.signal.sorted.hg38.bedgraph $GENOME/Sequence/WholeGenomeFasta/hg38.chrom.size merged.DNase.pval.signal.sorted.hg38.bigwig
+#check if file is sorted
+# sort -c merged.DNase.pval.signal.hg38.bedgraph
+### TODO i think this takes too long 
+# find other solutions! https://www.biostars.org/p/66927/#66931 
+
+bsub -q normal -o sort.output -n 1 -M 2000 LC_COLLATE=C sort -k1,1 -k2,2n merged.DNase.pval.signal.hg38.bedgraph > merged.DNase.pval.signal.sorted.hg38.bedgraph
+
+#############  3. move bedgraph to bigwig
+# conda install -c bioconda ucsc-bedgraphtobigwig --freeze-installed
+bsub -q normal -o bgtobw.output -n 1 -M 4000 bedGraphToBigWig <(LC_COLLATE=C sort -k1,1 -k2,2n merged.DNase.pval.signal.hg38.bedgraph) /PHShome/rw552/Documents/hg38.chrom.sizes merged.DNase.pval.signal.hg38.bigwig
 
 #############  4. find blood DNase enhancer regions and convert to narrowPeak
 awk '{OFS="\t"; print $0,"peak"NR }' regions_enh_merged.hg38.blood.bed > named.regions_enh_merged.blood.bed
@@ -92,8 +104,9 @@ done
 #liftover bedgraph from hg19 to hg38
 for i in H3K4me1 H3K4me3 H3K27ac; do
   bsub -q big -n 1 -M 10000 liftOver RoadmapBlood${i}Merged.bg hg19ToHg38.over.chain RoadmapBlood${i}Merged.hg38.bg unMapped
+  LC_COLLATE=C sort -k1,1 -k2,2n RoadmapBlood${i}Merged.hg38.bg > RoadmapBlood${i}Merged.sorted.hg38.bedgraph
+done 
 
-LC_COLLATE=C sort -k1,1 -k2,2n merged.DNase.pval.signal.hg38.bedgraph > merged.DNase.pval.signal.sorted.hg38.bedgraph
 
 #bedgraph to bigwig
 for i in H3K4me1 H3K4me3 H3K27ac; do
@@ -104,5 +117,9 @@ rm *pval.signal.bigwig *bg
 cd ..
 for i in H3K4me1 H3K4me3 H3K27ac; do ln -fs Roadmap/RoadmapBrain${i}Merged.bigwig RoadmapBrain${i}Merged.bigwig; done
 
-
+# split by bins
+for i in ../externalData/*/*.bigwig;
+do
+    [ -e $i.eRNA.1kbp.summit.or.mid.1kbp.100bins ] || bsub -q short -n 1 -M 1000 "toBinRegionsOnBigwig.sh $i  100 > $i.eRNA.1kbp.summit.or.mid.1kbp.100bins"
+done
 

@@ -1,15 +1,17 @@
 library(ggplot2)
 
-setwd("~/Documents/enHunter/scripts/gene-expression")
-exp_genes <- read.table("plus.minus.genes.tsv", sep = "\t", header = TRUE)
+setwd("./input_files/split.strands")
+
+### 8/2/2023: strand splitting analysis based on genes less accurate than transcripts
+#exp_genes <- read.table("plus.minus.genes.tsv", sep = "\t", header = TRUE)
 
 # there are some genes which are HIGHLY expressed on the minus and plus strand
 # TODO more analysis later
-ggplot(exp_genes, aes(x=minus, y=plus, color=strand)) + geom_point()
+#ggplot(exp_genes, aes(x=minus, y=plus, color=strand)) + geom_point()
 
 # more zoomed in 
-ggplot(exp_genes, aes(x=minus, y=plus, color=strand)) +
-  geom_point() + xlim(0,1) + ylim(0,1) 
+#ggplot(exp_genes, aes(x=minus, y=plus, color=strand)) +
+  #geom_point() + xlim(0,1) + ylim(0,1) 
 
 exp_transcripts <- read.table("plus.minus.transcripts.tsv", sep = "\t", header = TRUE)
 transcripts <- ggplot(exp_transcripts, aes(x=minus, y=plus, color=strand)) + geom_point()
@@ -26,12 +28,16 @@ wrong_minus <- exp_transcripts[exp_transcripts$ratio < 1 & exp_transcripts$stran
 wrong_plus <- exp_transcripts[exp_transcripts$ratio > 1 & exp_transcripts$strand == "+" , ]
 
 # ratio = 1 (thats just wrong)
-# exp_transcripts[exp_transcripts$ratio == 1, ]
+# good thing is that there are 0 transcript with ratios of 1 (equal in plus and minus) ! 
+exp_transcripts[exp_transcripts$ratio == 1, ]
 
 # protein coding only 
 protein_coding <- exp_transcripts[grep("protein_coding", exp_transcripts$gene),]
-protein <- ggplot(protein_coding, aes(x=minus, y=plus, color=strand)) + geom_point() 
-ggsave("transcript_protein.png", plot = protein)
+colors <- c("-" = "blue", "+" = "red")
+protein <- ggplot(protein_coding, aes(x=minus, y=plus, color=strand)) +
+  geom_point() + scale_color_manual(values=colors) + theme_bw()
+protein
+ggsave("transcript_protein.png", plot = protein, device = "png")
 
 library(ggiraph)
 library(plotly)

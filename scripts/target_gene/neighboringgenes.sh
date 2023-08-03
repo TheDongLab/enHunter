@@ -2,9 +2,9 @@
 #### usage #####
 # ./neighboring_genes.sh LITAF_loci.bed 1000000 /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/gene_exp/gene_expr_matrix_tpm_row_genes.txt LITAF_locus_expr
 
-module load ucsc/default
-module load bedtools/2.23.0
-module load R/3.1.0
+#module load ucsc/default
+#module load bedtools/2.23.0
+#module load R/3.1.0
 
 ##### inputs ######
 ## 1. genomic coordinates 
@@ -21,6 +21,8 @@ output=$4
 
 index=hg38
 GENOME=/data/bioinformatics/referenceGenome/Homo_sapiens/UCSC/$index
+
+conda activate /PHShome/rw552/condaenvs/ucsc 
 
 ## step 1. find the genes which are within the search area (up and downstream of the loci)
 awk -v dist=$dist 'OFS="\t" {print $1, $2 - dist, $3 + dist, $4 }' $inputbed | intersectBed -a - -b <(sortBed -i $GENOME/Annotation/Genes/gencode.v37.annotation.genes.bed | grep chr ) -wb | cut -f 8 | awk -F'___' '{split($2,a,"."); print a[1]}'> neighboring_genes.tmp

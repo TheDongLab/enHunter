@@ -1,6 +1,7 @@
 # =============================
 ## given the RPM values of two eRNAs (minus and plus), creates the summation of the two 
 ## usage: Rscript make_pairs.R eRNA_minus eRNA_plus output
+### NOT USED 
 # =============================
 args<-commandArgs(trailingOnly=TRUE)
 
