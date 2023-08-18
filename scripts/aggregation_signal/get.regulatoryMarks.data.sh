@@ -19,8 +19,10 @@ echo "getting CAGE..."
 [ -d $externalData/CAGE ] || mkdir $externalData/CAGE
 cd $externalData/CAGE
 
-curl -s http://fantom.gsc.riken.jp/5/datahub/hg38/reads/ctssTotalCounts.fwd.bw > CAGE.FANTOM5.total.fwd.bigwig
-curl -s http://fantom.gsc.riken.jp/5/datahub/hg38/reads/ctssTotalCounts.rev.bw > CAGE.FANTOM5.total.rev.bigwig
+bsub -q normal -o download.fwd.cage.output -M 1000 curl -o CAGE.FANTOM5.total.fwd.bigwig https://fantom.gsc.riken.jp/5/datahub/hg38/reads/ctssTotalCounts.fwd.bw 
+bsub -q normal -o download.rev.cage.output -M 1000 curl -o CAGE.FANTOM5.total.rev.bigwig https://fantom.gsc.riken.jp/5/datahub/hg38/reads/ctssTotalCounts.rev.bw
+
+## for blood specific CAGE counts: https://fantom.gsc.riken.jp/5/datahub/hg38/ctss/human.tissue.hCAGE/ 
 
 ##### enhancers specifically expressed in blood (blood differentially expressed enhancers)
 curl -s https://slidebase.binf.ku.dk/human_enhancers/presets/serve/blood > blood_differentially_expressed_enh_hg19.bed
@@ -77,8 +79,13 @@ cd $externalData/TFBS
 # clustered TFBS (count all Peaks for 161 transcription factors in 91 cell types)
 # only per TF (e.g. if a TF occur in >1 cell types, it's only counted once)
 curl -s http://hgdownload.soe.ucsc.edu/goldenPath/hg38/encRegTfbsClustered/encRegTfbsClusteredWithCells.hg38.bed.gz | gunzip > encRegTfbsClusteredWithCells.hg38.bed
-sort -k1,1 encRegTfbsClusteredWithCells.hg38.bed | bedItemOverlapCount hg38 -chromSize=$ANNOTATION/ChromInfo.txt stdin | sort -k1,1 -k2,2n | sed 's/ /\t/g' > encRegTfbsClusteredWithCells.hg38.bg
-bedGraphToBigWig encRegTfbsClusteredWithCells.hg38.bg $ANNOTATION/ChromInfo.txt TFBS.ENCODE.all.count.bigwig
+
+AMPPD_eRNA=/data/bioinformatics/projects/donglab/AMPPD_eRNA
+conda activate /PHShome/rw552/condaenvs/ucsc 
+conda install -c bioconda ucsc-beditemoverlapcount --freeze-installed
+
+sort -k1,1 encRegTfbsClusteredWithCells.hg38.bed | bedItemOverlapCount hg38 -chromSize=$AMPPD_eRNA/inputs/ChromInfo.txt stdin | sort -k1,1 -k2,2n | sed 's/ /\t/g' > encRegTfbsClusteredWithCells.hg38.bg
+bedGraphToBigWig encRegTfbsClusteredWithCells.hg38.bg $AMPPD_eRNA/inputs/ChromInfo.txt TFBS.ENCODE.all.count.bigwig
 
 echo "getting VISTA region"
 # ---------------------------------
@@ -93,7 +100,6 @@ echo "getting Conservation"
 cd $externalData/Conservation
 
 # # phyloP
-# # RW: http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/hg38.phyloP100way.bw 
 rsync -avz --progress http://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/hg38.phyloP100way.bw  ./
 
 echo "getting DNase"
@@ -105,5 +111,3 @@ cd $externalData/DNase
 # Note: V3 differs from V2 as it includes clusters having only 1 cell type contributing to the cluster (previously excluded). For us, V2 is fine.
 curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeRegDnaseClustered/wgEncodeRegDnaseClusteredV2.bed.gz | gunzip | awk '$5>=500 && $4>=5' > wgEncodeRegDnaseClusteredV2.filtered.bed
 
-# ENCODE Hela
-curl -s http://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeUwDnase/wgEncodeUwDnaseHelas3RawRep1.bigWig > DNase.ENCODE.Hela.bigwig

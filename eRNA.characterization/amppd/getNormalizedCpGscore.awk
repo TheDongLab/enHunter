@@ -20,7 +20,7 @@
     n2 = length(s);
     n3 = gsub("g","g",s) + gsub("c","c",s);
 # RW: divide by 0 error line 21
-    if (n3 == 0) val=0;
+    if (n3 == 0) val="NA";
     else val=4*n2*n1/(n3**2);
 
     print id, val, n3/n2;

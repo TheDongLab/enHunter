@@ -31,6 +31,8 @@
 #HiC                  integer       number of PIR (promoter interacting regions) in TNE 
 #bHiC                 boolean       if any PIR 
 
+#cCRE                 integer       number of TNEs overlapping whole blood enhancer regions defined by Dr. Hojoong Kwak
+
 pipeline_path=/data/bioinformatics/projects/donglab/AMPPD_eRNA
 source $pipeline_path/config.txt
 
@@ -77,6 +79,11 @@ bigWigAverageOverBed $inputBG $inputbed stdout -minMax | cut -f1,8 | sort -k1,1 
 # normalized CpG score
 # ====================================
 echo "RUNNING ---- CpG score"
+
+# NOTE: sequences for certain regions may be undefined/hard masked repeats 
+# i.e. "NNNNNNNNNNNNNNNNNNNNNNNNNNN"
+# this will result in a CpG score of 0
+
 bedtools getfasta -name -tab -fi $GENOME/Sequence/WholeGenomeFasta/genome.fa -bed $inputbed -fo eRNA.$STRAND.seq.tab
 $pipeline_path/bin/getNormalizedCpGscore.awk eRNA.$STRAND.seq.tab | sort -k1,1  > eRNA.$STRAND.f05.CpG.txt
 #textHistogram -col=2 -real -binSize=0.02 -maxBinCount=50 -minVal=0 eRNA.f05.CpG.tab
@@ -274,9 +281,9 @@ cut -f4,7 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f20.nHostgene.txt
 cut -f4,6 $TMPFILE.2 | sort -k1,1 > eRNA.$STRAND.f21.lenHostgene.txt
 
 # ====================================
-# Hi-C - overlap with PIR 
+# PCHi-C - overlap with PIR 
 # ====================================
-echo "RUNNING ---- Hi-C"
+echo "RUNNING ---- PCHi-C"
 intersectBed -a $inputbed -b $EXTERNAL_FEATURE/Hi-C/final_PCHiC_peak_matrix_cutoff5_hg38.bed -c | sort -k4,4 | cut -f4,5 > eRNA.$STRAND.f22.PCHiC.txt
 
 #reports the intersected region of A and B with A's name 
@@ -289,6 +296,18 @@ mv *.$STRAND.* $pipeline_path/output/$STRAND/
 Rscript $pipeline_path/src/eRNA.characterize.merge.R `ls $pipeline_path/output/$STRAND/eRNA.$STRAND.f*.txt`
 
 exit;
+
+# =========================================
+# cCRE (candidate cis-regulatory elements)
+# =========================================
+conda activate /PHShome/rw552/condaenvs/ucsc 
+awk '$4 ~ /^enh/' ucsc_WB_cCRE_sorted.bed > enhancer_WB_cCRE.bed 
+
+strandedbed=/data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA_stranded_sorted.bed
+intersectBed -a $strandedbed -b $EXTERNAL_FEATURE/uPRO/enhancer_WB_cCRE.bed -c | sort -k4,4 | cut -f4,7 > eRNA.cCRE.intersect
+
+
+################################## NOT USED #######################################
 
 # ============================
 # merging data files for both strands 
@@ -308,7 +327,6 @@ cat $pipeline_path/output/minus/eRNA.enrichment/eRNA.minus.f18.eSNP.pvalDisease.
 cat $pipeline_path/output/minus/eRNA.minus.f08.CAGEenhtissue.txt $pipeline_path/output/plus/eRNA.plus.f08.CAGEenhtissue.txt | sort -k 10 | cut -f 5-9 | uniq | bedtools groupby -g 5 -c 5 -o count | sort -k 1 | bedtools groupby -g 1 -c 2 -o sum > $pipeline_path/output/merged/eRNA.f18.eSNP.gtexCaviarDisease.txt
 
 ### TODO 
-############################################################################################################################################################
 
 # ====================================
 # bidirectional_trans 
@@ -325,4 +343,3 @@ elif [[ $STRAND == "plus" ]];
 then
 Rscript eRNA.bidir.R $EXTERNAL_FEATURE/bidir/cut.minus.plus.bed minus.plus
 fi
-############################################################################################################################################################

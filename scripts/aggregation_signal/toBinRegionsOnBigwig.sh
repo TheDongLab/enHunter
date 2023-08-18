@@ -33,6 +33,9 @@ type=$4
 ## NOTE:
 ## bug in bigwigsummary: https://groups.google.com/a/soe.ucsc.edu/forum/#!topic/genome/pWjcov-xQyQ
 ## TODO: switch to use bigWigAverageOverBed $bigwig $bedfile stdout -minMax | cut -f1,$ncol
+## RW: bigwigsummary will not always give you an exact value the way that bigWigAverageOverBed will 
+## RW: the summary levels have some rounding error and some border conditions when extracting data over relatively small regions 
+## RW: sed 's/n\/a/0/g' replaces na values with 0?
 
 cat $bedfile | while read chr start end name score strand rest
 do
