@@ -123,3 +123,7 @@ dist_density_minus.plus
 
 ggsave("single_classI_pairs.distance.density.plot.pdf",
        plot=dist_density_minus.plus, device="pdf")
+
+#####################################
+
+fread("all.bidir.pairs.merged.bed")

@@ -116,9 +116,7 @@ dev.off()
 percent.overlap.TNEs <- (sum(DNaseENCODE.TNEs) / length(DNaseENCODE.TNEs)) * 100
 percent.overlap.TNEs #12.08792
 
-
-
-
+###### test TNEs with overlap with enhancers found from Kim et al. (uPRO? uChRO?)
 TNE.class <- all %>% select(V1, class)
 colnames(TNE.class) <- c("TNE", "class")
 
@@ -133,11 +131,20 @@ cCRE.count <- ifelse(class1.or.2.cCRE.df$cCRE.count > 0, 1, 0)
 cCRE <- c(sum(cCRE.count), length(cCRE.count) - sum(cCRE.count))
 pie(cCRE)
 
+######## finding the percent of enhancers supported by features ######
+all <- fread("./input_files/eRNA.characterize.feature.color.xls")
 
+all.plot <- ggplot(all, aes(as.factor(class), fill = as.factor(class))) + geom_bar() + 
+  theme(axis.line = element_line(), panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), panel.background = element_blank(), 
+        panel.border = element_blank(), text = element_text(size = 20)) + ylab("Count") + 
+  geom_text(position = position_dodge(width = 0.9), vjust = 0, stat="count", aes(label=after_stat(count))) +
+  xlab("Class") + scale_fill_manual(values=c('#ff3333', '#ff9966', '#ffcccc'))
+all.plot
 
+ggsave("all.tnes.class.pdf",plot=all.plot, device = "pdf")
 
-
-
-
+num.tne.annotation <- nrow(all[class== 2 | class== 1])
+per.tne.annocation <- (num.tne.annotation / nrow(all)) * 100
 
 

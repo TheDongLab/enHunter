@@ -1,18 +1,17 @@
 #######################################
 # Usage: ./bidirectional_classes.R eRNA.characterize.feature.color.xls bidirectional_pairs.txt
+# add class information to bidirectional pairs
 #######################################
 library(data.table)
 library(dplyr)
 
-#args<-commandArgs(trailingOnly=TRUE)
+args<-commandArgs(trailingOnly=TRUE)
 
-#class <- args[1]
-#pairs <- args[2]
+class <- args[1]
+pairs <- args[2]
 
-class <- fread("/Users/rw552/Documents/amp-pd/enHunter/input_files/characterization/eRNA.characterize.feature.color.xls") %>% select(V1, strand, class)
-
-
-pairs <- fread("/Users/rw552/Documents/amp-pd/enHunter/scripts/peaks/bidirectional/pairs/900bp/bidirectional_pairs.txt")
+class <- fread(class) %>% select(V1, strand, class)
+pairs <- fread(pairs)
 colnames(pairs) <- c("TNE1", "strand1", "TNE2", "strand2", "distance")
 
 merge1 <- merge( pairs, class, by.y = c("V1", "strand"), by.x = c("TNE1", "strand1"))

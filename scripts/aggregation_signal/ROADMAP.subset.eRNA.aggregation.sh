@@ -247,6 +247,60 @@ do
     bsub -q normal -n 1 -M 1000 "bigWigAverageOverBed $i eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.plus.bed $i.plus.tab"
 done
 
+
+############### PD vs Healthy Control #######################
+
+# RNA seq
+bsub -q normal -n 1 -M 1000 "bigWigAverageOverBed inputs/minus/combined.mean.normalized.control.samplesN200.minus.bigwig eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.minus.bed combined.mean.normalized.control.samplesN200.minus.bigwig.minus.tab"
+bsub -q normal -n 1 -M 1000 "bigWigAverageOverBed inputs/plus/combined.mean.normalized.control.samplesN200.plus.bigwig eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.plus.bed combined.mean.normalized.control.samplesN200.plus.bigwig.plus.tab"
+
+bsub -q normal -n 1 -M 1000 "bigWigAverageOverBed inputs/minus/combined.mean.normalized.PD.samplesN200.minus.bigwig eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.minus.bed combined.mean.normalized.PD.samplesN200.minus.bigwig.minus.tab"
+bsub -q normal -n 1 -M 1000 "bigWigAverageOverBed inputs/plus/combined.mean.normalized.PD.samplesN200.plus.bigwig eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.plus.bed combined.mean.normalized.PD.samplesN200.plus.bigwig.plus.tab"
+
+# CAGE
+RIKEN=/data/bioinformatics/external_data/externalData/RIKEN/PD_blood_CTSS
+
+conda activate /PHShome/rw552/condaenvs/ucsc 
+
+# healthy control
+sort -k 1,1 -k2,2n Ct.ctss.bed > Ct.ctss.sorted.bed
+bedtools merge -i Ct.ctss.sorted.bed -d -1 -o sum -c 5 -S + > Ct.ctss.plus.bedgraph
+bedtools merge -i Ct.ctss.sorted.bed -d -1 -o sum -c 5 -S - > Ct.ctss.minus.bedgraph
+
+bedGraphToBigWig Ct.ctss.plus.bedgraph /PHShome/rw552/Documents/hg38.chrom.sizes Ct.ctss.plus.bw
+bedGraphToBigWig Ct.ctss.minus.bedgraph /PHShome/rw552/Documents/hg38.chrom.sizes Ct.ctss.minus.bw
+
+bigWigAverageOverBed $RIKEN/Ct.ctss.minus.bw eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.minus.bed Ct.ctss.minus.tab
+bigWigAverageOverBed $RIKEN/Ct.ctss.plus.bw eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.plus.bed Ct.ctss.plus.tab
+
+# PD
+bsub -q normal -n 1 -M 1000 "sort -k 1,1 -k2,2n PD.ctss.bed > PD.ctss.sorted.bed"
+bedtools merge -i PD.ctss.sorted.bed -d -1 -o sum -c 5 -S + > PD.ctss.plus.bedgraph
+bedtools merge -i PD.ctss.sorted.bed -d -1 -o sum -c 5 -S - > PD.ctss.minus.bedgraph
+
+bedGraphToBigWig PD.ctss.plus.bedgraph /PHShome/rw552/Documents/hg38.chrom.sizes PD.ctss.plus.bw
+bedGraphToBigWig PD.ctss.minus.bedgraph /PHShome/rw552/Documents/hg38.chrom.sizes PD.ctss.minus.bw
+
+bigWigAverageOverBed $RIKEN/PD.ctss.minus.bw eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.minus.bed PD.ctss.minus.tab
+bigWigAverageOverBed $RIKEN/PD.ctss.plus.bw eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.plus.bed PD.ctss.plus.tab
+
+##### combined CAGE signal for PD and Healthy Control 
+conda activate /PHShome/rw552/condaenvs/ucsc 
+
+bigWigMerge Ct.ctss.minus.bw PD.ctss.minus.bw combined.ctss.minus.bedGraph
+sort -k1,1 -k2,2n combined.ctss.minus.bedGraph > combined.ctss.minus.sorted.bedGraph
+
+bigWigMerge Ct.ctss.plus.bw PD.ctss.plus.bw combined.ctss.plus.bedGraph
+sort -k1,1 -k2,2n combined.ctss.plus.bedGraph > combined.ctss.plus.sorted.bedGraph
+
+bedGraphToBigWig combined.ctss.minus.sorted.bedGraph /PHShome/rw552/Documents/hg38.chrom.sizes combined.ctss.minus.bw
+bedGraphToBigWig combined.ctss.plus.sorted.bedGraph /PHShome/rw552/Documents/hg38.chrom.sizes combined.ctss.plus.bw
+
+bigWigAverageOverBed $RIKEN/combined.ctss.minus.bw eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.minus.bed combined.ctss.minus.tab
+bigWigAverageOverBed $RIKEN/combined.ctss.plus.bw eRNA.1kbp.summit.or.mid.1kbp.100bp.windows.plus.bed combined.ctss.plus.tab
+
+#### CODE DUMP ####
+
 #[ -e $i.eRNA.1kbp.summit.or.mid.1kbp.100bins ] || bsub -q normal -n 1 -M 1000 "bin/toBinRegionsOnBigwig.sh $i eRNA.1kbp.summit.or.mid.1kbp.hg19.bed 100 > $i.eRNA.1kbp.summit.or.mid.1kbp.hg19.100bins"
 #[ -e $i.eRNA.1kbp.summit.or.mid.1kbp.100bins ] || bsub -q normal -n 1 -M 1000 "bin/toBinRegionsOnBigwig.sh $i eRNA.1kbp.summit.or.mid.1kbp.bed 100 > $i.eRNA.1kbp.summit.or.mid.1kbp.hg19.100bins"
 #[ -e $DNase.eRNA.1kbp.summit.or.mid.1kbp.100bins ] || bsub -q normal -n 1 -M 1000 "bin/toBinRegionsOnBigwig.sh $DNase eRNA.1kbp.summit.or.mid.1kbp.bed 100 > $DNase.eRNA.1kbp.summit.or.mid.1kbp.100bins"
