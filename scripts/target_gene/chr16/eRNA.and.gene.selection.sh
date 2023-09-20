@@ -10,6 +10,9 @@ cat <(head -n 1 gene_expr_matrix_tpm_row_genes.txt) <(grep ENSG00000189067 gene_
 cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs
 cat <(head -n 1 gene_expr_matrix_tpm_row_genes.txt) <(grep ENSG00000038532 gene_expr_matrix_tpm_row_genes.txt) > CLEC16A_gene_exp_table.txt
 
+# TNF
+cd /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/gene_exp
+cat <(head -n 1 gene_expr_matrix_tpm_row_genes.txt) <(grep ENSG00000232810 gene_expr_matrix_tpm_row_genes.txt) > TNF_gene_exp_table.txt
 
 # stored in the /data/bioinformatics/projects/donglab/AMPPD_eRNA/inputs/eRNA_exp directory
 

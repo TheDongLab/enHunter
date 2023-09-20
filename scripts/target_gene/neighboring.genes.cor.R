@@ -14,6 +14,8 @@ library(data.table)
 library(dplyr)
 library(purrr)
 library(ggplot2)
+library(BiocManager)
+library(biomaRt)
 
 args<-commandArgs(trailingOnly=TRUE)
 
@@ -28,7 +30,32 @@ output <- args[2]
 ### reading in the TPM values of ALL the neighboring genes in one table ###
 neighbors <- fread(neighbors, header = FALSE)
 
-transposed <- t(neighbors)
+# change ENSEMBL ids to SYMBOL 
+mart <- useMart("ENSEMBL_MART_ENSEMBL")
+mart <- useDataset("hsapiens_gene_ensembl", mart)
+
+neighbors$ensLookup <- gsub("\\.[0-9]*$", "", neighbors$V1)
+
+annotLookup <- getBM(
+  mart=mart,
+  attributes=c( "ensembl_gene_id", "external_gene_name"),
+  filter="ensembl_gene_id",
+  values=neighbors$ensLookup,
+  uniqueRows=TRUE)
+
+annotLookup$name <- apply(annotLookup, 1, function(x){
+  if (x[["external_gene_name"]] == "" | x[["external_gene_name"]] == "Y_RNA") {
+    return(x[["ensembl_gene_id"]])
+  } else {
+    return(x[["external_gene_name"]])
+  }
+})
+
+all_neighbors <- merge(neighbors, annotLookup, by.x = "ensLookup", by.y = "ensembl_gene_id", all = T)
+temp <- subset(all_neighbors, select = -c(V1, ensLookup, external_gene_name)) %>% dplyr::select(name, everything())
+temp[is.na(temp)] <- ""
+
+transposed <- t(temp)
 colnames(transposed) <- replace(transposed[1, ], 1, "sample")
 new <- transposed[-1, ] %>% as.data.frame() 
 
@@ -97,7 +124,7 @@ plot <- ggplot(neighboring_genes, aes(x=reorder(gene, p.value, decreasing = TRUE
                               y=estimate, fill = -log10(p.value))) + 
   geom_bar(stat="identity") + coord_flip() + scale_fill_gradient(high = "red", low = "blue") + 
   xlab("gene") + theme_bw()
-
+plot
 ggsave(paste0(output, ".pdf"), plot = plot, device = "pdf", width = 4, height = 9, units = "in")
 #ggsave("test.pdf", plot = plot, device = "pdf", width = 5, height = 10,  units = "in")
 

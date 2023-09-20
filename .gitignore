@@ -18,3 +18,5 @@
 !LITAF_neighboring_gene_signif.csv
 input_files/*
 scripts/peaks/bidirectional/pairs/*
+scripts/target_gene/*
+scripts/TFBS/*

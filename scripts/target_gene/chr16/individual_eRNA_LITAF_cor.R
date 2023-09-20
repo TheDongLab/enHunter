@@ -65,10 +65,14 @@ df <- Reduce(merge,list(eRNA1, eRNA2, eRNA3, LITAF))
 df <- df[, -c(1)]
 df <- df[is.finite(rowSums(df)),]
 
+############### check to see that samples are normally distributed ##############
+ggplot(eRNA1, aes(x = eRNA1)) + geom_histogram()
+ggplot(eRNA2, aes(x = eRNA2)) + geom_histogram()
+ggplot(eRNA3, aes(x = eRNA3)) + geom_histogram()
 
 ######## graphing ########
 ## eRNA1 
-eRNA1.correlation <- cor.test(df[["eRNA1"]], df[["ENSG00000189067.12"]],  method = "pearson")
+eRNA1.correlation <- cor.test(df[["eRNA1"]], df[["ENSG00000189067.12"]],  method = "spearman")
 eRNA1.cor.label <- paste0("correlation: ", round(eRNA1.correlation$estimate, 2))
 eRNA1.pval.label <- paste0("p-value: ", signif(eRNA1.correlation$p.val, 3))
 

@@ -14,18 +14,19 @@ colnames(lengths) <- c("TNE", "strand", "length")
 med <- median(lengths$length, na.rm=TRUE)
 
 length.plot <- ggplot(lengths, aes(x=length)) + 
-  geom_histogram(fill="gray", binwidth=0.1)  + 
-  scale_x_continuous(trans="log10", n.breaks = 28) + 
+  geom_histogram(fill="gray", binwidth=0.05)  + 
+  scale_x_continuous(trans="log10", n.breaks = 25) + 
   scale_y_continuous(n.breaks= 10) + 
   theme_bw() + 
-  geom_vline(xintercept=med, color="red", linetype="dashed") +
+  geom_vline(xintercept=120, color="red", linetype="dashed") +
   theme(axis.line = element_line(), panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         panel.background = element_blank(), 
         panel.border = element_blank(), 
         text = element_text(size = 20)) + xlab("TNE Length (bp)") + ylab("Count of TNEs") +
   annotate("text", x = med+560, y=5000, size = 6,
-           label=paste0("median: ", round(med, digits = 2), " bp"), color="red")
+           label=paste0("median: ", round(med, digits = 2), " bp"), color="red") + 
+  facet_grid(strand ~ .)
 
 length.plot
 ggsave("tne.length.pdf", plot=length.plot, device="pdf")

@@ -15,6 +15,7 @@ setwd("./input_files/split.strands")
 
 exp_transcripts <- read.table("plus.minus.transcripts.tsv", sep = "\t", header = TRUE)
 transcripts <- ggplot(exp_transcripts, aes(x=minus, y=plus, color=strand)) + geom_point()
+transcripts
 ggsave("transcripts.png", plot = transcripts)
 
 transcripts_zoomed <- ggplot(exp_transcripts, aes(x=minus, y=plus, color=strand)) + geom_point() + xlim(0,1) + ylim(0,1) 
@@ -33,12 +34,30 @@ exp_transcripts[exp_transcripts$ratio == 1, ]
 
 # protein coding only 
 protein_coding <- exp_transcripts[grep("protein_coding", exp_transcripts$gene),]
+wrong_plus_protein <- protein_coding[protein_coding$ratio > 1 & protein_coding$strand == "+" , ]
+wrong_minus_protein <- protein_coding[protein_coding$ratio < 1 & protein_coding$strand == "-" , ]
+
+write.table(wrong_plus_protein, "plus.mapping.to.minus.protein.tsv", quote = F, sep = "\t", row.names = F)
+write.table(wrong_minus_protein, "minus.mapping.to.plus.protein.tsv", quote = F, sep = "\t", row.names = F)
+
+
 colors <- c("-" = "blue", "+" = "red")
 protein <- ggplot(protein_coding, aes(x=minus, y=plus, color=strand)) +
   geom_point() + scale_color_manual(values=colors) + theme_bw()
 protein
 ggsave("transcript_protein.png", plot = protein, device = "png")
 
+
+### same graph as protein without HBB and HBA1/2
+no.globin <- protein_coding[!startsWith( protein_coding$gene, "HBB"),]
+no.globin <- no.globin[!startsWith(no.globin$gene, "HBA"),]
+
+no.globin.plot <- ggplot(no.globin, aes(x=minus, y=plus, color=strand)) +
+  geom_point() + scale_color_manual(values=colors) + theme_bw()
+no.globin.plot
+ggsave("no.globin.transcript_protein.png", plot = no.globin.plot, device = "png")
+
+######################interactive graphs######################################
 library(ggiraph)
 library(plotly)
 
@@ -48,6 +67,11 @@ x <- girafe(ggobj = protein)
 x <- girafe_options(x = x, opts_zoom(min = 1, max = 10))
 
 print(x)
+
+no.globin.plot <- ggplot(no.globin) + geom_point_interactive(aes(x=minus, y=plus, color=strand, tooltip = gene)) + theme_minimal()
+a <- girafe(ggobj = no.globin.plot)
+a <- girafe_options(x = a, opts_zoom(min = 1, max = 10))
+print(a)
 
 protein_zoomed <- ggplot(protein_coding) + geom_point_interactive(aes(x=minus, y=plus, color=strand, tooltip = gene)) + 
   theme_minimal() + xlim(0,100) + ylim(0,100) 
