@@ -27,7 +27,7 @@ gene_location_file_name = paste0(base.dir, "/data/geneloc.txt");
 covariates_file_name = paste0(base.dir, "/data/Covariates.txt");
 
 # Output file name
-output_file_name_cis = tempfile();
+output_file_name_cis = "test";
 output_file_name_tra = tempfile();
 
 # Only associations significant at this level will be saved
@@ -81,22 +81,22 @@ me = Matrix_eQTL_main(
   snps = snps, 
   gene = gene, 
   cvrt = cvrt,
-  output_file_name      = output_file_name_tra,
-  pvOutputThreshold     = pvOutputThreshold_tra,
+  output_file_name      = "",
+  pvOutputThreshold     = 0,
   useModel = useModel, 
   errorCovariance = errorCovariance, 
   verbose = TRUE, 
   output_file_name.cis  = output_file_name_cis,
-  pvOutputThreshold.cis = pvOutputThreshold_cis,
+  pvOutputThreshold.cis = 1,
   snpspos = snpspos, 
   genepos = genepos,
   cisDist = cisDist,
   pvalue.hist = TRUE,
-  min.pv.by.genesnp = TRUE,
-  noFDRsaveMemory = FALSE);
+  min.pv.by.genesnp = F,
+  noFDRsaveMemory = F);
 
-unlink(output_file_name_tra);
-unlink(output_file_name_cis);
+#unlink(output_file_name_tra);
+#unlink(output_file_name_cis);
 
 ## Results:
 

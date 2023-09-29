@@ -41,7 +41,7 @@ covariates_file_name = covariates_file;
 
 
 # Output file name
-output_file_name_cis = output_file;
+output_file_name_cis = paste0(output_file, ".txt");
 #output_file_name_tra = "trans.eQTL";
 
 # Only associations significant at this level will be saved
@@ -63,7 +63,7 @@ snps$fileDelimiter = "\t";      # the TAB character
 snps$fileOmitCharacters = "NA"; # denote missing values;
 snps$fileSkipRows = 1;          # one row of column labels
 snps$fileSkipColumns = 1;       # one column of row labels
-snps$fileSliceSize = 2000;      # read file in slices of 2,000 rows
+snps$fileSliceSize = 100000;      # read file in slices of 2,000 rows
 snps$LoadFile(SNP_file_name);
 
 # for some reason it keeps reading snpid as a column 
@@ -106,30 +106,25 @@ me = Matrix_eQTL_main(
   errorCovariance = errorCovariance, 
   verbose = TRUE, 
   output_file_name.cis  = output_file_name_cis,
-  pvOutputThreshold.cis = 1, # record all pairs: ntests = neqtls
+  pvOutputThreshold.cis = 1, # record all pairs: ntests = neqtls ### significant threshold for cis eQTLs
   snpspos = snpspos, 
   genepos = genepos,
   cisDist = cisDist,
-  pvalue.hist = "qqplot",
-  min.pv.by.genesnp = FALSE,
-  noFDRsaveMemory = FALSE);
+  pvalue.hist = F, 
+  min.pv.by.genesnp = FALSE, # record the minimum p-value for each SNP and each gene 
+  noFDRsaveMemory = F); ## save significant gene-SNP pairs directly to output files and skip FDR calculation
 
-unlink(output_file_name_cis);
-unlink(output_file_name_tra);
+#unlink(output_file_name_cis); ### unlink deletes output_file_name_cis
+#unlink(output_file_name_tra);
 
 ## Results:
 
-cat('Analysis done in: ', me$time.in.sec, ' seconds', '\n');
-write.table(me$cis$eqtls, file = paste0("signif.", output_file))
+cat('Analysis done in: ', me$time.in.sec, ' seconds', '\n')
+#write.table(me$cis$eqtls, file = paste0("signif.", output_file, ".txt"))
 
 
 ## Make the histogram of local and distant p-values
-pdf(paste0("hist.", output_file, ".pdf"))
-plot(me)
-dev.off()
-
-
-
-
-
+#pdf(paste0("hist.", output_file, ".pdf"))
+#plot(me)
+#dev.off()
 
