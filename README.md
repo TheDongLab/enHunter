@@ -5,7 +5,8 @@ A pipeline to identify enhancer RNAs (eRNAs) from total RNA-seq data
 see the /WDL for the .wdl scripts 
 
 1. create Docker image using the scripts in /WDL/Docker.
-docker build --tag name /WDL/Docker/script/Dockerfile
+
+##### docker build --tag name /WDL/Docker/script/Dockerfile
 
 2. create Broad Methods Repository and import WDL script
 
